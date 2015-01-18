@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+	<meta charset='utf-8'>
+	<title>Pac Man Lite</title>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="stylesheets/style.css">
+	<script type="text/javascript">
+
+		var pacman = {
+			x: 270,
+			y: 510,
+			pos: 39,
+			pos_temp: 39,
+			collision: false,
+			power: false,
+			score: 0
+		}
+
+		var ghost = {
+			x: 270,
+			y: 330,
+			pos: 38,
+			collision: false
+		}
+
+		var tile = 10;
+		var conv = 3;
+		var coins = [];
+		var timer = 0;
+		var timeRemaining = 199;
+		var sound = new Audio('sounds/pacman_chomp.wav');
+		var sound2 = new Audio('sounds/pacman_death.wav');
+		var upPac;
+		var upGho;
+		var upGhoRun;
+		var timeBonus;
+
+		var mapArray = [
+					[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+					[0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0],
+					[0,1,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,1,0],
+					[0,1,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,1,0],
+					[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+					[0,1,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,1,0],
+					[0,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0],
+					[0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,0],
+					[9,9,9,0,1,0,1,1,1,1,1,1,1,0,1,0,9,9,9],
+					[0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0],
+					[7,1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,7],
+					[0,0,0,0,1,0,1,0,0,1,0,0,1,0,1,0,0,0,0],
+					[9,9,9,0,1,0,1,1,1,1,1,1,1,0,1,0,9,9,9],
+					[0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0],
+					[0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0],
+					[0,1,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,1,0],
+					[0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0],
+					[0,0,1,0,1,0,1,0,0,0,0,0,1,0,1,0,1,0,0],
+					[0,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0],
+					[0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0],
+					[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+					[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+		];
+
+		function drawMap(){
+			for (var i=0; i<mapArray.length; i++){
+				for (var j=0; j<mapArray[i].length; j++){
+					if (mapArray[i][j] == 1 || mapArray[i][j] == 7 || mapArray[i][j] == 9){
+						$('#container').append("<div class='path'></div>");
+					}
+					else if (mapArray[i][j] == 0){
+						$('#container').append("<div class='brick'></div>");
+					}
+				}
+			}
+		}
+
+		function drawCoins(){
+			var id = 1;
+			for (var i=0; i<(mapArray.length); i++){
+				for (var j=0; j<(mapArray[i].length); j++){
+					if (mapArray[i][j] == 1 || mapArray[i][j] == 7){
+						var posY = i*30+42;
+						var posX = j*30+12;
+						$('#coins').append("<img id='" + id + "' class='coin'" +
+							"src='images/coin.jpg' style='top: " + posY + "px; left: " + posX + "px;'>");
+						coins.push({id: id, x: posX, y: posY});
+						id++;
+					}
+				}
+			}
+
+			$("img[id='23']").replaceWith("<img id='23' class='power'" +
+				"src='images/powerpellet.gif' style='top: 120px; left: 30px;'>");
+			$("img[id='28']").replaceWith("<img id='28' class='power'" +
+				"src='images/powerpellet.gif' style='top: 120px; left: 510px;'>");
+			$("img[id='140']").replaceWith("<img id='140' class='power'" +
+				"src='images/powerpellet.gif' style='top: 510px; left: 30px;'>");
+			$("img[id='154']").replaceWith("<img id='154' class='power'" +
+				"src='images/powerpellet.gif' style='top: 510px; left: 510px;'>");
+		}
+
+		function drawPacman(x, y, pos){
+			$('#hero').html("<img class='pacman' src='images/pacman" + pos +
+				".gif' style='top: " + y + "px; left: " + x + "px;'>");
+		}
+
+		function drawGhost(x, y, pos, num){
+			if (num == 2){
+				$('#enemy').html("<img class='ghost' src='images/ghost2.gif'" +
+					"style='top: " + y + "px; left: " + x + "px;'>");
+			}
+			else {
+				$('#enemy').html("<img class='ghost' src='images/ghost.gif'" +
+					"style='top: " + y + "px; left: " + x + "px;'>");
+			}	
+		}
+
+		function updatePacman(){
+			detectCollision(pacman.x, pacman.y, pacman.pos_temp);
+			movePacman();
+			drawPacman(pacman.x, pacman.y, pacman.pos);
+			updateLife();
+			updateCoins();
+		}
+
+		function detectCollision(x, y, pos){
+			var xLeft = Math.floor((x-tile)/tile/conv);
+			var xRight = Math.ceil((x+tile)/tile/conv);
+			var yUp = Math.floor((y-tile)/tile/conv);
+			var yDown = Math.ceil((y+tile)/tile/conv);
+
+			var xLeftUp = mapArray[yUp-1][xLeft];
+			var xLeftDown = mapArray[yDown-1][xLeft];
+			var xRightUp = mapArray[yUp-1][xRight];
+			var xRightDown = mapArray[yDown-1][xRight];
+			var yUpLeft = mapArray[yUp-1][xLeft]
+			var yUpRight = mapArray[yUp-1][xRight]
+			var yDownLeft = mapArray[yDown-1][xLeft]
+			var yDownRight = mapArray[yDown-1][xRight]
+
+			if (pos == 37 && xLeftUp == 0 && y/tile % conv > 0.7 ){
+				pacman.collision = true;
+				pacman.pos_temp = pacman.pos;
+			}
+			else if (pos == 37 && mapArray[Math.round(y/tile/conv)-1][xLeft] == 0 && (y/tile) % conv == 0  ){
+				pacman.collision = true;
+				pacman.pos_temp = pacman.pos;
+			}
+			else if (pos == 37 && xLeftDown == 0 && y/tile % conv > 0.7 ){
+				pacman.collision = true;
+				pacman.pos_temp = pacman.pos;
+			}
+			else if (pos == 37 && mapArray[Math.round(y/tile/conv)-1][xLeft] == undefined && (y/tile) % conv == 0 ){
+				pacman.collision = undefined;
+				pacman.pos = pacman.pos_temp;
+			}
+			else if (pos == 39 && xRightUp == 0 && y/tile % conv > 0.7 ){
+				pacman.collision = true;
+				pacman.pos_temp = pacman.pos;
+			}
+			else if (pos == 39 && mapArray[Math.round(y/tile/conv)-1][xRight] == 0 && (y/tile) % conv == 0 ) {
+				pacman.collision = true;
+				pacman.pos_temp = pacman.pos;
+			}
+			else if (pos == 39 && xRightDown == 0 && y/tile % conv > 0.7 ){
+				pacman.collision = true;
+				pacman.pos_temp = pacman.pos;
+			}
+			else if (pos == 39 && mapArray[Math.round(y/tile/conv)-1][xRight] == undefined && (y/tile) % conv == 0){
+				pacman.collision = undefined;
+				pacman.pos = pacman.pos_temp;
+			}
+
+			else if (pos == 38 && yUpLeft == 0 && x/tile % conv > 0.7){
+				pacman.collision = true;
+				pacman.pos_temp = pacman.pos;
+			}
+			else if (pos == 38 && mapArray[yUp-1][(x/tile/conv)] == 0 && x/tile % conv == 0){
+				pacman.collision = true;
+				pacman.pos_temp = pacman.pos;
+			}
+			else if (pos == 38 && yUpRight == 0 && x/tile % conv > 0.7){
+				pacman.collision = true;
+				pacman.pos_temp = pacman.pos;
+			}
+			else if (pos == 40 && yDownLeft == 0 && x/tile % conv > 0.7){
+				pacman.collision = true;
+				pacman.pos_temp = pacman.pos;
+			}
+			else if (pos == 40 && mapArray[yDown-1][(x/tile/conv)] == 0 && x/tile % conv == 0 ){
+				pacman.collision = true;
+				pacman.pos_temp = pacman.pos;
+			}
+			else if (pos == 40 && yDownRight == 0 && x/tile % conv > 0.7 ){
+				pacman.collision = true;
+				pacman.pos_temp = pacman.pos;
+			}
+			else {
+				pacman.collision = false;
+				pacman.pos = pacman.pos_temp;
+			}
+		}
+
+		function movePacman(){
+			if (pacman.collision == undefined){
+				if (pacman.pos == 37){
+					pacman.x = mapArray[0].length * tile*conv - tile*conv;
+				}
+				else {
+					pacman.x = 0;
+				}
+			}
+			else if (pacman.collision != true){
+				if (pacman.pos == 37){
+					pacman.x -= tile;
+				}
+				else if (pacman.pos == 39){
+					pacman.x += tile;
+				}
+				else if (pacman.pos == 38){
+					pacman.y -= tile;
+				}
+				else if (pacman.pos == 40){
+					pacman.y += tile;
+				}
+			}
+		}
+
+		function updateGhost(){
+			shortestPath(ghost.x, ghost.y, ghost.pos);
+			moveGhost();
+			drawGhost(ghost.x, ghost.y, ghost.pos, 1);
+			timer = 0;
+		}
+
+		function updateGhostRun(){
+			longestPath(ghost.x, ghost.y, ghost.pos);
+			moveGhost();
+			drawGhost(ghost.x, ghost.y, ghost.pos, 2);
+			timer++;
+			if (timer == 20){
+				pacman.power = false;
+				clearInterval(upGhoRun);
+				upGho = setInterval(updateGhost, 150);
+			}
+		}
+
+		function moveGhost(){
+			if (ghost.pos == 37){
+				ghost.x -= tile;
+			}
+			else if (ghost.pos == 39){
+				ghost.x += tile;
+			}
+			else if (ghost.pos == 38){
+				ghost.y -= tile;
+			}
+			else if (ghost.pos == 40){
+				ghost.y += tile;
+			}
+		}
+
+		function ghostOptions(x, y, pos){
+			var options = [];
+			options[37] = mapArray[Math.round((y-1)/tile/conv) - 1][Math.floor((x-tile)/tile/conv)];
+			options[39] = mapArray[Math.round((y-1)/tile/conv) - 1][Math.ceil((x+tile)/tile/conv)];
+			options[38] = mapArray[Math.floor((y-1)/tile/conv) - 1][Math.round((x-tile)/tile/conv)];
+			options[40] = mapArray[Math.ceil((y+1)/tile/conv) - 1][Math.round((x-tile)/tile/conv)];
+			return options;
+		}
+
+		function shortestPath(x, y, pos){
+			var options = ghostOptions(x, y, pos);
+			var sum = options[37] + options[38] + options[39] + options[40];
+			var delta_x = pacman.x - ghost.x;
+			var delta_y = pacman.y - ghost.y;
+
+			if (sum == 4){ 
+				//This means the ghost should 'try' to go left or right
+				if (Math.abs(delta_x) > Math.abs(delta_y)){
+					if (delta_x < 0){
+						ghost.pos = 37;
+					}
+					else {
+						ghost.pos = 39;
+					}
+				}
+				else { // This means the ghost should 'try' to go up or down
+					if (delta_y < 0){
+						ghost.pos = 38;
+					}
+					else {
+						ghost.pos = 40;
+					}
+				}
+			}
+			else if (sum == 3){
+				if (Math.abs(delta_x) > Math.abs(delta_y)){ 
+					if (delta_x < 0 && options[37] != 0){
+						ghost.pos = 37;
+					}
+					else if (delta_x > 0 && options[39] != 0){
+						ghost.pos = 39;
+					}
+					else if (options[37] == 0 || options[39] == 0){
+						if (delta_y < 0){
+							ghost.pos = 38;
+						}
+						else {
+							ghost.pos = 40;
+						}
+					}
+				}
+				else { 
+					if (delta_y < 0 && options[38] != 0){
+						ghost.pos = 38;
+					}
+					else if (delta_y > 0 && options[40] != 0){
+						ghost.pos = 40;
+					}
+					else if (options[38] == 0 || options[40] == 0){
+						if (delta_x < 0){
+							ghost.pos = 37;
+						}
+						else {
+							ghost. pos = 39;
+						}
+					}
+				}
+			}
+			else if (sum == 2){
+				if (options[37] != 0 && options[39] != 0){
+					if (delta_x < 0){
+						ghost.pos = 37;
+					}
+					else {
+						ghost.pos = 39;
+					}
+				}
+				else if (options[38] != 0 && options[40] != 0){
+					if (delta_y < 0){
+						ghost.pos = 38;
+					}
+					else {
+						ghost.pos = 40;
+					}
+				}
+				else if (Math.abs(delta_x) > Math.abs(delta_y)){ 
+					if (delta_x < 0 && options[37] != 0){
+						ghost.pos = 37;
+					}
+					else if (delta_x > 0 && options[39] != 0){
+						ghost.pos = 39;
+					}
+					else if (options[37] == 0 || options[39] == 0){
+						if (options[40] == 0){
+							ghost.pos = 38;
+						}
+						else {
+							ghost.pos = 40;
+						}
+					}
+				}
+				else { 
+					if (delta_y < 0 && options[38] != 0){
+						ghost.pos = 38;
+					}
+					else if (delta_y > 0 && options[40] != 0){
+						ghost.pos = 40;
+					}
+					else if (options[38] == 0 || options[40] == 0){
+						if (options[39] == 0){
+							ghost.pos = 37;
+						}
+						else {
+							ghost.pos = 39;
+						}
+					}
+				}
+			}
+			else if (sum == 1){
+				if (options[37] != 0){
+					ghost.pos = 37;
+				}
+				else if (options[39] != 0){
+					ghost.pos = 39;
+				}
+				else if (options[38] != 0){
+					ghost.pos = 38;
+				}
+				else {
+					ghost.pos = 40;
+				}
+			}
+		}
+
+		function longestPath(x, y, pos){
+			var options = ghostOptions(x, y, pos);
+			var sum = options[37] + options[38] + options[39] + options[40];
+			var delta_x = pacman.x - ghost.x;
+			var delta_y = pacman.y - ghost.y;
+
+			if (sum == 4){ 
+				//This means the ghost should 'try' to go left or right
+				if (Math.abs(delta_x) > Math.abs(delta_y)){
+					if (delta_x > 0){
+						ghost.pos = 37;
+					}
+					else {
+						ghost.pos = 39;
+					}
+				}
+				else { // This means the ghost should 'try' to go up or down
+					if (delta_y > 0){
+						ghost.pos = 38;
+					}
+					else {
+						ghost.pos = 40;
+					}
+				}
+			}
+			else if (sum == 3){
+				if (Math.abs(delta_x) > Math.abs(delta_y)){ 
+					if (delta_x > 0 && options[37] != 0){
+						ghost.pos = 37;
+					}
+					else if (delta_x < 0 && options[39] != 0){
+						ghost.pos = 39;
+					}
+					else if (options[37] == 0 || options[39] == 0){
+						if (delta_y > 0){
+							ghost.pos = 38;
+						}
+						else {
+							ghost.pos = 40;
+						}
+					}
+				}
+				else { 
+					if (delta_y > 0 && options[38] != 0){
+						ghost.pos = 38;
+					}
+					else if (delta_y < 0 && options[40] != 0){
+						ghost.pos = 40;
+					}
+					else if (options[38] == 0 || options[40] == 0){
+						if (delta_x > 0){
+							ghost.pos = 37;
+						}
+						else {
+							ghost. pos = 39;
+						}
+					}
+				}
+			}
+			else if (sum == 2){
+				if (options[37] != 0 && options[39] != 0){
+					if (delta_x > 0){
+						ghost.pos = 37;
+					}
+					else {
+						ghost.pos = 39;
+					}
+				}
+				else if (options[38] != 0 && options[40] != 0){
+					if (delta_y > 0){
+						ghost.pos = 38;
+
+					}
+					else {
+						ghost.pos = 40;
+					}
+				}
+				else if (Math.abs(delta_x) > Math.abs(delta_y)){ 
+					if (delta_x > 0 && options[37] != 0){
+						ghost.pos = 37;
+					}
+					else if (delta_x < 0 && options[39] != 0){
+						ghost.pos = 39;
+					}
+					else if (options[37] == 0 || options[39] == 0){
+						if (options[40] == 0){
+							ghost.pos = 38;
+						}
+						else {
+							ghost.pos = 40;
+						}
+					}
+				}
+				else { 
+					if (delta_y > 0 && options[38] != 0){
+						ghost.pos = 38;
+					}
+					else if (delta_y < 0 && options[40] != 0){
+						ghost.pos = 40;
+					}
+					else if (options[38] == 0 || options[40] == 0){
+						if (options[39] == 0){
+							ghost.pos = 37;
+						}
+						else {
+							ghost.pos = 39;
+						}
+					}
+				}
+			}
+			else if (sum == 1){
+				if (options[37] != 0){
+					ghost.pos = 37;
+				}
+				else if (options[39] != 0){
+					ghost.pos = 39;
+				}
+				else if (options[38] != 0){
+					ghost.pos = 38;
+				}
+				else {
+					ghost.pos = 40;
+				}
+			}
+		}
+
+		function updateLife(){
+			var delta = getDistance(pacman.x, ghost.x, pacman.y, ghost.y);
+			if (delta < 30){
+				if (pacman.power == false){
+					sound2.play();
+					clearInterval(upGho);
+					clearInterval(upPac);
+					$('#end').append("<p id='loser'>GAME OVER</p>");
+					document.getElementById('hero').remove();
+				}
+				else {
+					ghost.x = 270;
+					ghost.y = 330;
+					ghost.pos = 38;
+					pacman.score += 500;
+					pacman.power = false;
+					var kill = new Audio('sounds/pacman_eatghost.wav');
+					kill.play();
+					clearInterval(upGhoRun);
+					upGho = setInterval(updateGhost, 150);
+				}
+			}
+		}
+
+		function updateCoins(){
+			for (var i in coins){
+				var delta = getDistance(pacman.x+15, coins[i].x, pacman.y+15, coins[i].y);
+				if (delta <= 6){
+					var el = document.getElementById(coins[i].id);
+					if (coins[i].id == 23 || coins[i].id == 28 || coins[i].id == 140 || coins[i].id == 154){
+						pacman.score += 100;
+						pacman.power = true;
+						var power = new Audio('sounds/pacman_eatghost.wav');
+						power.play();
+						$('#enemy').html("<img class='ghost' src='images/ghost2.gif' style='top: " +
+							ghost.y + "px; left: " + ghost.x + "px;'>");
+						clearInterval(upGho);
+						upGhoRun = setInterval(updateGhostRun, 200);
+					}
+					else {
+						pacman.score += 10;
+						sound.play();
+					}
+					coins.splice(i, 1);
+					document.getElementById('coins').removeChild(el);
+					document.getElementById('info').children[2].innerHTML = "Score: " + pacman.score;
+				}
+			}
+			if (coins.length == 0){
+				clearInterval(upGho);
+				clearInterval(upPac);
+				$('#end').append("<p id='winner'>YOU WIN!!!</p>");
+				var end = new Audio('sounds/pacman_intermission.wav');
+				end.play();
+				clearInterval(mainTime);
+				timeBonus = setInterval(timeBonus, 30);
+			}
+		}
+
+		function mainTimer(){
+			timeRemaining--;
+			document.getElementById('info').children[1].innerHTML = "Time: " + timeRemaining;
+			if (timeRemaining == 0){
+				sound2.play();
+				clearInterval(upGho);
+				clearInterval(upGhoRun);
+				clearInterval(upPac);
+				$('#end').append("<p id='loser'>GAME OVER</p>");
+			}
+		}
+
+		function timeBonus(){
+			pacman.score += 10;
+			timeRemaining--;
+			document.getElementById('info').children[2].innerHTML = "Score: " + pacman.score;
+			document.getElementById('info').children[1].innerHTML = "Time: " + timeRemaining;
+			var bonus = new Audio('sounds/add_coins.wav');
+			bonus.play();
+			if (timeRemaining == 0){
+				clearInterval(timeBonus);
+			}
+		}
+
+		function getDistance(x1, x2, y1, y2){
+			return Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+		}
+
+		$(document).ready(function(){
+			drawMap();
+			drawCoins();
+			drawPacman(pacman.x, pacman.y, pacman.pos);
+			drawGhost(ghost.x, ghost.y, ghost.post, 1);
+
+			var snd = new Audio('sounds/pacman_beginning.wav');
+			snd.play();
+
+			$('#start').on('click', 'button', function(){
+				$(this).remove();
+				upGho = setInterval(updateGhost, 150);
+				upPac = setInterval(updatePacman, 100);
+				mainTime = setInterval(mainTimer, 1000);
+			})
+
+			document.onkeydown = function(e){
+				if (e.keyCode >= 37 && e.keyCode <= 40){
+					pacman.pos_temp = e.keyCode;
+					updatePacman();
+				}
+			}
+		});
+
+	</script>
+</head>
+<body>
+	<div id='info'>
+		<h1 class='yellow'>PACMAN LITE</h1>
+		<h2 class='time'>Time: 199</h2>
+		<h2 class='score'>Score: 0</h2>
+	</div>
+	<div id='container'></div>
+	<div id='coins'></div>
+	<div id='hero'></div>
+	<div id='enemy'></div>
+	<div id='end'></div>
+	<div id='start'><button class='start'>Click to Start</button></div>
+</body>
+</html>
