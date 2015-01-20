@@ -18,16 +18,16 @@
 					[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
 					[0,1,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,1,0],
 					[0,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0],
-					[0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,0],
-					[9,9,9,0,1,0,1,1,1,1,1,1,1,0,1,0,9,9,9],
-					[0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0],
-					[7,1,1,1,1,1,1,0,9,9,9,0,1,1,1,1,1,1,7],
-					[0,0,0,0,1,0,1,0,0,9,0,0,1,0,1,0,0,0,0],
-					[9,9,9,0,1,0,1,1,1,1,1,1,1,0,1,0,9,9,9],
-					[0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0],
+					[0,0,0,0,1,0,0,0,9,0,9,0,0,0,1,0,0,0,0],
+					[9,9,9,0,1,0,9,9,9,9,9,9,9,0,1,0,9,9,9],
+					[0,0,0,0,1,0,9,0,0,0,0,0,9,0,1,0,0,0,0],
+					[7,9,9,9,1,9,9,0,9,9,9,0,9,9,1,9,9,9,7],
+					[0,0,0,0,1,0,9,0,0,9,0,0,9,0,1,0,0,0,0],
+					[9,9,9,0,1,0,9,9,9,9,9,9,9,0,1,0,9,9,9],
+					[0,0,0,0,1,0,9,0,0,0,0,0,9,0,1,0,0,0,0],
 					[0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0],
 					[0,1,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,1,0],
-					[0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0],
+					[0,1,1,0,1,1,1,1,1,9,1,1,1,1,1,0,1,1,0],
 					[0,0,1,0,1,0,1,0,0,0,0,0,1,0,1,0,1,0,0],
 					[0,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0],
 					[0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0],
@@ -52,7 +52,7 @@
 	            var id = 1;
 	            for (var i=0; i<(this.map.length); i++){
 	            	for (var j=0; j<(this.map[i].length); j++){
-	            		if (this.map[i][j] == 1 || this.map[i][j] == 7){
+	            		if (this.map[i][j] == 1){
 	            			var posY = i*30+42;
 	            			var posX = j*30+12;
 	            			$('#coins').append("<img id='" + id + "' class='coin'" +
@@ -67,9 +67,9 @@
 	            	"src='images/powerpellet.gif' style='top: 120px; left: 30px;'>");
 	            $("img[id='28']").replaceWith("<img id='28' class='power'" +
 	            	"src='images/powerpellet.gif' style='top: 120px; left: 510px;'>");
-	            $("img[id='136']").replaceWith("<img id='136' class='power'" +
+	            $("img[id='102']").replaceWith("<img id='102' class='power'" +
 	            	"src='images/powerpellet.gif' style='top: 510px; left: 30px;'>");
-	            $("img[id='150']").replaceWith("<img id='150' class='power'" +
+	            $("img[id='115']").replaceWith("<img id='115' class='power'" +
 	            	"src='images/powerpellet.gif' style='top: 510px; left: 510px;'>");                   
 			}
 
@@ -93,21 +93,20 @@
 					".gif' style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
 			}
 
-    		this.updateMove = function (game, upPac, mainTime, sound) {
+    		this.update = function (game, upPac, ghost, upGho, upGhoRun, mainTime, sound) {
 	    		this.detectCollision(game);
 				this.move(game);
 				this.draw();
-                this.updateCoins(game, upPac, mainTime, sound);
+                this.updateCoins(game, upPac, ghost, upGho, upGhoRun, mainTime, sound);
     		}
 
 			this.detectCollision = function (game) {
 				var block = game.info.tile * game.info.conv;
-				var x = this.info.x / block;
-				var y = this.info.y / block;
-	            
 	            this.info.collision = false;
-	            // This prevents errors when inbetween blocks
+	            // Only checks for collision when Pacman is in center of block (no overlap)
 	            if (this.info.y % block === 0 && this.info.x % block === 0) {
+	            	var x = this.info.x / block;
+					var y = this.info.y / block;
 					var left = game.map[y-1][Math.floor(x - 0.1)];
 	            	var up = game.map[Math.floor(y - 0.1)-1][x];
 	            	var right = game.map[y-1][Math.ceil(x + 0.1)];
@@ -115,19 +114,117 @@
 	            	var options = [left, up, right, down];
 	            	// This means user is trying to change directions
     	            if (this.info.pos !== this.info.pos_temp) {
-    	            	if (options[this.info.pos_temp - 37] === 1) {
+    	            	if (options[this.info.pos_temp - 37] === 1 || options[this.info.pos_temp - 37] === 9) {
     	            		this.info.pos = this.info.pos_temp;
     	            	}
     	            }
-    	            else {
-    	            	if (options[this.info.pos - 37] === 0) {
-    	            		this.info.collision = true;
-    	            	}
-    	            	else if (options[this.info.pos - 37] === undefined) {
-    	            		this.info.collision = undefined;
-    	            	}
-    	            }
+    	            // Checks if next block is a wall or a tunnel
+	            	if (options[this.info.pos - 37] === 0) {
+	            		this.info.collision = true;
+	            	}
+	            	else if (options[this.info.pos - 37] === undefined) {
+	            		this.info.collision = undefined;
+	            	}
 	            }
+			}
+
+			this.move = function (game) {
+				var block = game.info.tile * game.info.conv;
+				var sign = [-1, -1, 1, 1];
+				if (this.info.collision === undefined){
+					if (this.info.pos === 37){
+						this.info.x = game.map[0].length * block - block;
+					}
+					else if (this.info.pos === 39) {
+						this.info.x = 0;
+					}
+				}
+				else if (this.info.collision === false){
+					if (this.info.pos === 37 || this.info.pos === 39){
+						this.info.x += sign[this.info.pos - 37] * game.info.tile;
+					}
+					else if (this.info.pos === 38 || this.info.pos === 40){
+						this.info.y += sign[this.info.pos - 37] * game.info.tile;
+					}
+				}
+			}
+
+			this.updateCoins = function (game, upPac, ghost, upGho, upGhoRun, mainTime, sound) {
+				for (var i in game.coins){
+					var delta = getDistance(this.info.x+15, game.coins[i].x, this.info.y+15, game.coins[i].y);
+					if (delta <= 6){
+						var el = document.getElementById(game.coins[i].id);
+						var id = game.coins[i].id;
+						if (id === 23 || id === 28 || id === 102 || id === 115){
+							this.info.score += 100;
+							this.info.power = true;
+							sound.power.play();
+							$('#enemy').html("<img class='ghost' src='images/ghost2.gif' style='top: " +
+								ghost.info.y + "px; left: " + ghost.info.x + "px;'>");
+							clearInterval(upGho);
+							ghost.info.run = true;
+							var that = this;
+							function ghostLoop() {
+								ghost.update(game, upGho, that, sound);
+								console.log('b');
+							}
+							upGho = setInterval(ghostLoop, 200);
+						}
+						else {
+							this.info.score += 10;
+							sound.eat.play();
+						}
+						game.coins.splice(i, 1);
+						document.getElementById('coins').removeChild(el);
+						document.getElementById('info').children[2].innerHTML = "Score: " + this.info.score;
+					}
+				}
+				if (game.coins.length == 0){
+					// clearInterval(upGho);
+					clearInterval(upPac);
+					$('#end').append("<p id='winner'>YOU WIN!!!</p>");
+					sound.end.play();
+					clearInterval(mainTime);
+					// timeBonus = setInterval(timeBonus, 30);
+				}
+			}
+		}
+
+		function Ghost (x, y, pos) {
+			this.info = { x: x, y: y, pos: pos, pos_temp: pos, collision: false, run: false };
+			var timer = 0;
+
+			this.draw = function() {
+				if (this.info.run === false) {
+					$('#enemy').html("<img class='ghost' src='images/ghost.gif'" +
+						"style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
+				}
+				else {
+					$('#enemy').html("<img class='ghost' src='images/ghost2.gif'" +
+						"style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
+				}
+			}
+
+			this.update = function (game, upGho, pacman, sound) {
+				if (this.info.run === true) {
+					this.longestPath(game, pacman);
+					timer++;
+					if (timer === 20) {
+						this.info.run = false;
+						// clearInterval(upGho);
+						// var that = this;
+						// function ghostLoop() {
+						// 	that.update(game, upGho, pacman, sound);
+						// }
+						// upGho = setInterval(ghostLoop, 80);
+					}
+				}
+				else {
+					timer = 0;
+					this.shortestPath(game, pacman);
+				}
+				this.move(game);
+				this.draw();
 			}
 
 			this.move = function (game) {
@@ -141,7 +238,7 @@
 						this.info.x = 0;
 					}
 				}
-				else if (this.info.collision != true){
+				else if (this.info.collision === false){
 					if (this.info.pos === 37 || this.info.pos === 39){
 						this.info.x += options[this.info.pos - 37] * game.info.tile;
 					}
@@ -151,40 +248,118 @@
 				}
 			}
 
-			this.updateCoins = function (game, upPac, mainTime, sound) {
-				for (var i in game.coins){
-					var delta = getDistance(this.info.x+15, game.coins[i].x, this.info.y+15, game.coins[i].y);
-					if (delta <= 6){
-						var el = document.getElementById(game.coins[i].id);
-						var id = game.coins[i].id;
-						if (id === 23 || id === 28 || id === 136 || id === 150){
-							this.info.score += 100;
-							this.info.power = true;
-							sound.power.play();
-							// $('#enemy').html("<img class='ghost' src='images/ghost2.gif' style='top: " +
-							// 	ghost.y + "px; left: " + ghost.x + "px;'>");
-							// clearInterval(upGho);
-							// upGhoRun = setInterval(updateGhostRun, 200);
-						}
-						else {
-							this.info.score += 10;
-							sound.eat.play();
-						}
-						game.coins.splice(i, 1);
-						document.getElementById('coins').removeChild(el);
-						document.getElementById('info').children[2].innerHTML = "Score: " + this.info.score;
-					}
-				}
-				console.log(game.coins.length);
-				if (game.coins.length == 0){
-					// clearInterval(upGho);
-					clearInterval(upPac);
-					$('#end').append("<p id='winner'>YOU WIN!!!</p>");
-					sound.end.play();
-					clearInterval(mainTime);
-					// timeBonus = setInterval(timeBonus, 30);
-				}
+			this.shortestPath = function (game, pacman){
+				var block = game.info.tile * game.info.conv;
+				this.info.collision = false;
+	            // This prevents errors when inbetween blocks
+	            if (this.info.y % block === 0 && this.info.x % block === 0) {
+	            	var x = this.info.x / block;
+	            	var y = this.info.y / block;
+					var left = game.map[y-1][Math.floor(x - 0.1)];
+	            	var up = game.map[Math.floor(y - 0.1)-1][x];
+	            	var right = game.map[y-1][Math.ceil(x + 0.1)];
+	            	var down = game.map[Math.ceil(y + 0.1)-1][x];
+	            	var options = [left, up, right, down];
+	            	var sign = [[-1, 0], [0, -1], [1, 0], [0, 1]];
+	            	var distance = [1000, 1000, 1000, 1000];
+	            	var min = 1000;
+
+	            	// Calculate distance between Pacman and each possible Ghost path
+	            	for (var i=0; i<4; i++) {
+	            		if (options[i] !== 0) {
+	            			distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
+	            									  this.info.y + block*sign[i][1], pacman.info.y);
+	            		}
+	            	}
+
+	            	// Find shortest path
+	            	this.info.pos_temp = 37;
+	            	for (var i=0; i<4; i++) {
+	            		if (distance[i] < min) {
+	            			min = distance[i];
+	            			this.info.pos_temp = 37 + i;
+	            		}
+	            	}
+
+	            	// If shortest path requires backtracking, need to find next shortest path
+	            	if (Math.abs(this.info.pos - this.info.pos_temp) === 2) {
+	            		distance[this.info.pos_temp - 37] = 1000;
+	            		min = 1000;
+	            		for (var i=0; i<4; i++) {
+	            			if (distance[i] < min) {
+	            				min = distance[i];
+	            				this.info.pos_temp = 37 + i;
+	            			}
+	            		}
+	            	}
+	            	this.info.pos = this.info.pos_temp;
+
+	            	// Checks if next block is a tunnel
+	            	if (this.info.pos === 37 && left === undefined) {
+	            		this.info.collision = undefined;
+	            	}
+	            	else if (this.info.pos === 39 && right === undefined) {
+	            		this.info.collision = undefined;
+	            	}
+	            }
+	        }
+
+    		this.longestPath = function (game, pacman){
+    			var block = game.info.tile * game.info.conv;
+    			this.info.collision = false;
+                // This prevents errors when inbetween blocks
+                if (this.info.y % block === 0 && this.info.x % block === 0) {
+                	var x = this.info.x / block;
+                	var y = this.info.y / block;
+    				var left = game.map[y-1][Math.floor(x - 0.1)];
+                	var up = game.map[Math.floor(y - 0.1)-1][x];
+                	var right = game.map[y-1][Math.ceil(x + 0.1)];
+                	var down = game.map[Math.ceil(y + 0.1)-1][x];
+                	var options = [left, up, right, down];
+                	var sign = [[-1, 0], [0, -1], [1, 0], [0, 1]];
+                	var distance = [0, 0, 0, 0];
+                	var max = 0;
+
+                	// Calculate distance between Pacman and each possible Ghost path
+                	for (var i=0; i<4; i++) {
+                		if (options[i] !== 0) {
+                			distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
+                									  this.info.y + block*sign[i][1], pacman.info.y);
+                		}
+                	}
+
+                	// Find longest path
+                	this.info.pos_temp = 37;
+                	for (var i=0; i<4; i++) {
+                		if (distance[i] > max) {
+                			max = distance[i];
+                			this.info.pos_temp = 37 + i;
+                		}
+                	}
+
+                	// If longest path requires backtracking, need to find next longest path
+                	if (Math.abs(this.info.pos - this.info.pos_temp) === 2) {
+                		distance[this.info.pos_temp - 37] = 0;
+                		max = 0;
+                		for (var i=0; i<4; i++) {
+                			if (distance[i] > max) {
+                				max = distance[i];
+                				this.info.pos_temp = 37 + i;
+                			}
+                		}
+                	}
+                	this.info.pos = this.info.pos_temp;
+
+                	// Checks if next block is a tunnel
+                	if (this.info.pos === 37 && left === undefined) {
+                		this.info.collision = undefined;
+                	}
+                	else if (this.info.pos === 39 && right === undefined) {
+                		this.info.collision = undefined;
+                	}
+                }
 			}
+
 		}
 
 		function getDistance (x1, x2, y1, y2){
@@ -194,7 +369,10 @@
 		$(document).ready(function(){
 			var game = new Game();
 			var pacman = new Pacman(270, 510, 39);
+			var ghost = new Ghost(270, 360, 40);
 			var upPac;
+			var upGho;
+			var upGhoRun;
 			var mainTime;
 
 			var sound = {};
@@ -207,16 +385,24 @@
 			game.drawMap();
 			game.drawCoins();
 			pacman.draw();
+			ghost.draw();
+			ghost.shortestPath(game, pacman);
 			sound.start.play();
 
 			$('#start').on('click', 'button', function(){
 				$(this).remove();
-				upPac = setInterval(mainLoop, 80);
+				upPac = setInterval(pacLoop, 80);
+				upGho = setInterval(ghostLoop, 120);
 				mainTime = setInterval(timeLoop, 1000);
 			})
 
-			function mainLoop() {
-				pacman.updateMove(game, upPac, mainTime, sound);
+			function pacLoop() {
+				pacman.update(game, upPac, ghost, upGho, upGhoRun, mainTime, sound);
+			}
+
+			function ghostLoop() {
+				ghost.update(game, upGho, pacman, sound);
+				console.log('a');
 			}
 
 			function timeLoop() {
