@@ -21,8 +21,8 @@
 					[0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,0],
 					[9,9,9,0,1,0,1,1,1,1,1,1,1,0,1,0,9,9,9],
 					[0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0],
-					[7,1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,7],
-					[0,0,0,0,1,0,1,0,0,1,0,0,1,0,1,0,0,0,0],
+					[7,1,1,1,1,1,1,0,9,9,9,0,1,1,1,1,1,1,7],
+					[0,0,0,0,1,0,1,0,0,9,0,0,1,0,1,0,0,0,0],
 					[9,9,9,0,1,0,1,1,1,1,1,1,1,0,1,0,9,9,9],
 					[0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0],
 					[0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0],
@@ -67,9 +67,9 @@
 	            	"src='images/powerpellet.gif' style='top: 120px; left: 30px;'>");
 	            $("img[id='28']").replaceWith("<img id='28' class='power'" +
 	            	"src='images/powerpellet.gif' style='top: 120px; left: 510px;'>");
-	            $("img[id='140']").replaceWith("<img id='140' class='power'" +
+	            $("img[id='136']").replaceWith("<img id='136' class='power'" +
 	            	"src='images/powerpellet.gif' style='top: 510px; left: 30px;'>");
-	            $("img[id='154']").replaceWith("<img id='154' class='power'" +
+	            $("img[id='150']").replaceWith("<img id='150' class='power'" +
 	            	"src='images/powerpellet.gif' style='top: 510px; left: 510px;'>");                   
 			}
 
@@ -83,7 +83,6 @@
 					$('#end').append("<p id='loser'>GAME OVER</p>");
 				}
 			}
-
 		}
 
 		function Pacman (x, y, pos) {
@@ -94,91 +93,71 @@
 					".gif' style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
 			}
 
-    		this.updateMove = function (game, sound) {
+    		this.updateMove = function (game, upPac, mainTime, sound) {
 	    		this.detectCollision(game);
 				this.move(game);
-
-				$('#hero').html("<img class='pacman' src='images/pacman" + this.info.pos +
-					".gif' style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
-
-                this.updateCoins(game, sound);
+				this.draw();
+                this.updateCoins(game, upPac, mainTime, sound);
     		}
 
 			this.detectCollision = function (game) {
-
-	            var xLeft = Math.floor(( this.info.x - game.info.tile ) / game.info.tile / game.info.conv );
-	            var xRight = Math.ceil(( this.info.x + game.info.tile ) / game.info.tile / game.info.conv );
-	            var yUp = Math.floor(( this.info.y - game.info.tile ) / game.info.tile / game.info.conv );
-	            var yDown = Math.ceil(( this.info.y + game.info.tile ) / game.info.tile / game.info.conv );
-
+				var block = game.info.tile * game.info.conv;
+				var x = this.info.x / block;
+				var y = this.info.y / block;
+	            
 	            this.info.collision = false;
-	            if (this.info.y % (game.info.tile * game.info.conv) != 0 || this.info.x % (game.info.tile * game.info.conv) != 0) {
-	            	console.log('undefined');
-	            }
-	            else if (this.info.pos_temp === 37 && game.map[(this.info.y/game.info.tile/game.info.conv)-1][xLeft] === 1) {
-	            	this.info.pos = this.info.pos_temp;
-	            }
-	            else if (this.info.pos_temp === 38 && game.map[yUp-1][this.info.x/game.info.tile/game.info.conv] === 1) {
-	            	this.info.pos = this.info.pos_temp;
-	            }
-	            else if (this.info.pos_temp === 39 && game.map[(this.info.y/game.info.tile/game.info.conv)-1][xRight] === 1) {
-	            	this.info.pos = this.info.pos_temp;
-	            }
-	            else if (this.info.pos_temp === 40 && game.map[yDown-1][this.info.x/game.info.tile/game.info.conv] === 1) {
-	            	this.info.pos = this.info.pos_temp;
-	            }
-	            else {
-	            	if (this.info.pos === 37 && game.map[this.info.y/game.info.tile/game.info.conv-1][xLeft] > 0) {
-	            	}
-	            	else if (this.info.pos === 38 && game.map[yUp-1][this.info.x/game.info.tile/game.info.conv] > 0) {
-	            	}
-	            	else if (this.info.pos === 39 && game.map[this.info.y/game.info.tile/game.info.conv-1][xRight] > 0) {
-	            	}
-	            	else if (this.info.pos === 40 && game.map[yDown-1][this.info.x/game.info.tile/game.info.conv] > 0) {
-	            	}
-	            	else if (this.info.pos === 37 && game.map[this.info.y/game.info.tile/game.info.conv-1][xLeft] === undefined) {
-	            		this.info.collision = undefined;
-	            	}
-	            	else if (this.info.pos === 39 && game.map[this.info.y/game.info.tile/game.info.conv-1][xRight] === undefined) {
-	            		this.info.collision = undefined;
-	            	}
-	            	else {
-	            		this.info.collision = true;
-	            	}
+	            // This prevents errors when inbetween blocks
+	            if (this.info.y % block === 0 && this.info.x % block === 0) {
+					var left = game.map[y-1][Math.floor(x - 0.1)];
+	            	var up = game.map[Math.floor(y - 0.1)-1][x];
+	            	var right = game.map[y-1][Math.ceil(x + 0.1)];
+	            	var down = game.map[Math.ceil(y + 0.1)-1][x];
+	            	var options = [left, up, right, down];
+	            	// This means user is trying to change directions
+    	            if (this.info.pos !== this.info.pos_temp) {
+    	            	if (options[this.info.pos_temp - 37] === 1) {
+    	            		this.info.pos = this.info.pos_temp;
+    	            	}
+    	            }
+    	            else {
+    	            	if (options[this.info.pos - 37] === 0) {
+    	            		this.info.collision = true;
+    	            	}
+    	            	else if (options[this.info.pos - 37] === undefined) {
+    	            		this.info.collision = undefined;
+    	            	}
+    	            }
 	            }
 			}
 
 			this.move = function (game) {
-				if (this.info.collision == undefined){
-					if (this.info.pos == 37){
-						this.info.x = game.map[0].length * game.info.tile * game.info.conv - game.info.tile * game.info.conv;
+				var block = game.info.tile * game.info.conv;
+				var options = [-1, -1, 1, 1];
+				if (this.info.collision === undefined){
+					if (this.info.pos === 37){
+						this.info.x = game.map[0].length * block - block;
 					}
-					else if (this.info.pos == 39) {
+					else if (this.info.pos === 39) {
 						this.info.x = 0;
 					}
 				}
 				else if (this.info.collision != true){
-					if (this.info.pos == 37){
-						this.info.x -= game.info.tile;
+					if (this.info.pos === 37 || this.info.pos === 39){
+						this.info.x += options[this.info.pos - 37] * game.info.tile;
 					}
-					else if (this.info.pos == 39){
-						this.info.x += game.info.tile;
-					}
-					else if (this.info.pos == 38){
-						this.info.y -= game.info.tile;
-					}
-					else if (this.info.pos == 40){
-						this.info.y += game.info.tile;
+					else if (this.info.pos === 38 || this.info.pos === 40){
+						this.info.y += options[this.info.pos - 37] * game.info.tile;
 					}
 				}
 			}
 
-			this.updateCoins = function (game, sound) {
+			this.updateCoins = function (game, upPac, mainTime, sound) {
 				for (var i in game.coins){
 					var delta = getDistance(this.info.x+15, game.coins[i].x, this.info.y+15, game.coins[i].y);
 					if (delta <= 6){
 						var el = document.getElementById(game.coins[i].id);
-						if (game.coins[i].id == 23 || game.coins[i].id == 28 || game.coins[i].id == 140 || game.coins[i].id == 154){
+						var id = game.coins[i].id;
+						if (id === 23 || id === 28 || id === 136 || id === 150){
 							this.info.score += 100;
 							this.info.power = true;
 							sound.power.play();
@@ -196,6 +175,7 @@
 						document.getElementById('info').children[2].innerHTML = "Score: " + this.info.score;
 					}
 				}
+				console.log(game.coins.length);
 				if (game.coins.length == 0){
 					// clearInterval(upGho);
 					clearInterval(upPac);
@@ -213,20 +193,21 @@
 
 		$(document).ready(function(){
 			var game = new Game();
+			var pacman = new Pacman(270, 510, 39);
+			var upPac;
+			var mainTime;
+
 			var sound = {};
 			sound.start = new Audio('sounds/pacman_beginning.wav');
             sound.eat = new Audio('sounds/pacman_chomp.wav');
             sound.power = new Audio('sounds/pacman_eatghost.wav')
             sound.die = new Audio('sounds/pacman_death.wav');
             sound.end = new Audio('sounds/pacman_intermission.wav')
-			var upPac;
-			var mainTime;
-
+			
 			game.drawMap();
 			game.drawCoins();
-
-			var pacman = new Pacman(270, 510, 39);
 			pacman.draw();
+			sound.start.play();
 
 			$('#start').on('click', 'button', function(){
 				$(this).remove();
@@ -235,7 +216,7 @@
 			})
 
 			function mainLoop() {
-				pacman.updateMove(game, sound);
+				pacman.updateMove(game, upPac, mainTime, sound);
 			}
 
 			function timeLoop() {
@@ -248,7 +229,6 @@
 					pacman.detectCollision(game);
 				}
 			}
-
 		});
 
 	</script>
