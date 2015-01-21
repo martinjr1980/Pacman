@@ -16,6 +16,7 @@
 		<div id='coins'></div>
 		<div id='hero'></div>
 		<div id='enemy'></div>
+		<div id='enemy2'></div>
 		<div id='end'></div>
 		<div id='start'><button class='start'>Click to Start</button></div>
 	</body>
@@ -25,13 +26,16 @@
 	// Global variable (mainly for setInterval)
 	var game = new Game();
 	var pacman = new Pacman(270, 510, 37);
-	var ghost = new Ghost(270, 300, 38);
+	ghost = new Ghost(270, 300, 38);
+	ghost2 = new Ghost2 (270, 330, 38)
 
 	var upPac;
 	var upGho;
+	var upGho2;
 	var mainTime;
-	var pacLoop = function() { pacman.update(game, ghost); }
+	var pacLoop = function() { pacman.update(game, ghost, ghost2); }
 	var ghostLoop = function() { ghost.update(game, pacman); }
+	var ghost2Loop = function() { ghost2.update(game, pacman); }
 	var timeLoop = function() { game.timer(); }
 
 	var sound = {};
@@ -48,12 +52,15 @@
 	game.drawCoins();
 	pacman.draw();
 	ghost.draw();
+	ghost2.draw();
+
 	sound.start.play();
 
 	document.getElementById('start').onclick = function() {
 		this.innerHTML = '';
 		upPac = setInterval(pacLoop, 80);
 		upGho = setInterval(ghostLoop, 80);
+		upGho2 = setInterval(ghost2Loop, 80);
 		mainTime = setInterval(timeLoop, 1000);
 		sound.background1.loop = true;
 		sound.background1.play();
@@ -155,12 +162,12 @@
 				".gif' style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
 		}
 
-		this.update = function (game, ghost) {
+		this.update = function (game, ghost, ghost2) {
     		this.detectCollision(game);
 			this.move(game);
 			this.draw();
-			this.updateLife(game, ghost);
-            this.updateCoins(game, ghost);
+			this.updateLife(game, ghost, ghost2);
+            this.updateCoins(game, ghost, ghost2);
 		}
 
 		this.detectCollision = function (game) {
@@ -212,7 +219,7 @@
 			}
 		}
 
-		this.updateCoins = function (game, ghost) {
+		this.updateCoins = function (game, ghost, ghost2) {
 			var that = this;
 			var bonus;
 			for (var i in game.coins){
@@ -225,7 +232,7 @@
 						sound.background1.pause();
 						sound.background2.loop = true;
 						sound.background2.play();
-						$('#enemy').html("<img class='ghost' src='images/ghost2.gif' style='top: " +
+						$('#enemy').html("<img class='ghost' src='images/ghost5.gif' style='top: " +
 							ghost.info.y + "px; left: " + ghost.info.x + "px;'>");
 						ghost.info.mode = 'frightened';
 						// Forces ghost to reverse direction
@@ -237,6 +244,19 @@
 						}
 						clearInterval(upGho);
 						upGho = setInterval(ghostLoop, 100);
+
+						$('#enemy2').html("<img class='ghost' src='images/ghost5.gif' style='top: " +
+							ghost2.info.y + "px; left: " + ghost2.info.x + "px;'>");
+						ghost2.info.mode = 'frightened';
+						// Forces ghost to reverse direction
+						if (ghost2.info.pos <= 38) {
+							ghost2.info.pos += 2;
+						}
+						else {
+							ghost2.info.pos -= 2;
+						}
+						clearInterval(upGho2);
+						upGho2 = setInterval(ghost2Loop, 100);
 					}
 					else {
 						this.info.score += 10;
@@ -269,10 +289,10 @@
 			}
 		}
 
-		this.updateLife = function (game, ghost) {
+		this.updateLife = function (game, ghost, ghost2) {
 			var delta = getDistance(this.info.x, ghost.info.x, this.info.y, ghost.info.y);
 			if (delta < 15) {
-				if (ghost.info.mode === 'chase') {
+				if (ghost.info.mode === 'chase' || ghost.info.mode === 'scatter') {
 					sound.background1.pause();
 					sound.die.play();
 					clearInterval(upGho);
@@ -292,6 +312,29 @@
 					document.getElementById('info').children[2].innerHTML = "Score: " + this.info.score;
 				}
 			}
+
+			var delta2 = getDistance(this.info.x, ghost2.info.x, this.info.y, ghost2.info.y);
+			if (delta2 < 15) {
+				if (ghost2.info.mode === 'chase' || ghost2.info.mode === 'scatter') {
+					sound.background1.pause();
+					sound.die.play();
+					clearInterval(upGho2);
+					clearInterval(upPac);
+					clearInterval(mainTime);
+					$('#end').append("<p id='loser'>GAME OVER</p>");
+					document.getElementById('hero').remove();
+				}
+				else {
+					ghost2.info.x = 270;
+					ghost2.info.y = 360;
+					ghost2.info.pos = 40;
+					ghost2.info.pos_temp = 40;
+					ghost2.info.mode = 'chase';
+					this.info.score += 500;
+					sound.power.play();
+					document.getElementById('info').children[2].innerHTML = "Score: " + this.info.score;
+				}
+			}
 		}
 	}
 
@@ -305,7 +348,7 @@
 					"style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
 			}
 			else {
-				$('#enemy').html("<img class='ghost' src='images/ghost2.gif'" +
+				$('#enemy').html("<img class='ghost' src='images/ghost5.gif'" +
 					"style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
 			}
 		}
@@ -381,6 +424,165 @@
             		for (var i=0; i<4; i++) {
             			if (options[i] !== 0) {
             				distance[i] = getDistance(this.info.x + block*sign[i][0], game.map[0].length * block,
+            										  this.info.y + block*sign[i][1], 0);
+            			}
+            		}
+            	}
+            	else {
+            		// Calculate distance between Pacman and each possible Ghost path
+            		for (var i=0; i<4; i++) {
+            			if (options[i] !== 0) {
+            				distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
+            										  this.info.y + block*sign[i][1], pacman.info.y);
+            			}
+            		}
+            	}
+
+            	// Determine best path depending on the mode
+            	if (this.info.mode === 'scatter' || this.info.mode === 'chase') {
+            		var min = 1000;
+            		// Find shortest path
+            		for (var i=0; i<4; i++) {
+            			if (distance[i] < min) {
+            				min = distance[i];
+            				this.info.pos_temp = 37 + i;
+            			}
+            		}
+
+            		// If shortest path requires backtracking, need to find next shortest path
+            		if (Math.abs(this.info.pos - this.info.pos_temp) === 2) {
+            			distance[this.info.pos_temp - 37] = 1000;
+            			min = 1000;
+            			for (var i=0; i<4; i++) {
+            				if (distance[i] < min) {
+            					min = distance[i];
+            					this.info.pos_temp = 37 + i;
+            				}
+            			}
+            		}
+            	}
+            	else {
+	            	var max = 0;
+	            	// Find longest path
+	            	for (var i=0; i<4; i++) {
+	            		if (distance[i] > max) {
+	            			max = distance[i];
+	            			this.info.pos_temp = 37 + i;
+	            		}
+	            	}
+
+	            	// If longest path requires backtracking, need to find next longest path
+	            	if (Math.abs(this.info.pos - this.info.pos_temp) === 2) {
+	            		distance[this.info.pos_temp - 37] = 0;
+	            		max = 0;
+	            		for (var i=0; i<4; i++) {
+	            			if (distance[i] > max) {
+	            				max = distance[i];
+	            				this.info.pos_temp = 37 + i;
+	            			}
+	            		}
+	            	}
+            	}
+            	// After all the calculations, update ghost's position
+            	this.info.pos = this.info.pos_temp;
+
+            	// Checks if next block is a tunnel
+            	if (this.info.pos === 37 && left === undefined) {
+            		this.info.collision = undefined;
+            	}
+            	else if (this.info.pos === 39 && right === undefined) {
+            		this.info.collision = undefined;
+            	}            
+            }	           
+        }
+	}
+
+	function Ghost2 (x, y, pos) {
+		this.info = { x: x, y: y, pos: pos, pos_temp: pos, collision: false, mode: 'scatter' };
+		var timer = 0;
+
+		this.draw = function() {
+			if (this.info.mode === 'chase' || this.info.mode === 'scatter') {
+				$('#enemy2').html("<img class='ghost' src='images/ghost2.gif'" +
+					"style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
+			}
+			else {
+				$('#enemy2').html("<img class='ghost' src='images/ghost5.gif'" +
+					"style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
+			}
+		}
+
+		this.update = function (game, pacman) {
+			if (this.info.mode === 'chase' || this.info.mode === 'scatter') {
+				sound.background2.pause();
+				sound.background1.loop = true;
+				sound.background1.play();
+			}
+			else {
+				timer++;
+				if (timer === 50) {
+					this.info.mode = 'chase';
+					clearInterval(upGho);
+					upGho = setInterval(ghostLoop, 80);
+					timer = 0;
+				}
+			}
+			this.findPath(game, pacman);
+			this.move(game);
+			this.draw();
+		}
+
+		this.move = function (game) {
+			var block = game.info.tile * game.info.conv;
+			var options = [-1, -1, 1, 1];
+			// Checks if going through tunnel
+			if (this.info.collision === undefined){
+				if (this.info.pos === 37){
+					this.info.x = game.map[0].length * block - block;
+				}
+				else if (this.info.pos === 39) {
+					this.info.x = 0;
+				}
+			}
+			else if (this.info.collision === false){
+				if (this.info.pos === 37 || this.info.pos === 39){
+					this.info.x += options[this.info.pos - 37] * game.info.tile;
+				}
+				else if (this.info.pos === 38 || this.info.pos === 40){
+					this.info.y += options[this.info.pos - 37] * game.info.tile;
+				}
+			}
+		}
+
+		this.findPath = function (game, pacman){
+			var block = game.info.tile * game.info.conv;
+			var x = this.info.x / block;
+			var y = this.info.y / block;
+			this.info.collision = false;
+
+            // This prevents errors when in between blocks
+            if (this.info.y % block === 0 && this.info.x % block === 0) {
+				var left = game.map[y-1][Math.floor(x - 0.1)];
+            	var up = game.map[Math.floor(y - 0.1)-1][x];
+            	var right = game.map[y-1][Math.ceil(x + 0.1)];
+            	var down = game.map[Math.ceil(y + 0.1)-1][x];
+            	var options = [left, up, right, down];
+            	var sign = [[-1, 0], [0, -1], [1, 0], [0, 1]];
+            	var distance = [];
+            	this.info.pos_temp = 37;
+
+            	// Calculate distance between ghost and 'target'
+            	if (this.info.mode === 'scatter') {
+            		timer++;
+            		// Timer cap 30 instead of 90 because it's only checking a third of the time
+            		if (timer === 30) {
+            			this.info.mode = 'chase';
+            			timer = 0;
+            		}
+            		// Calculate distance between Pacman and top right tile
+            		for (var i=0; i<4; i++) {
+            			if (options[i] !== 0) {
+            				distance[i] = getDistance(this.info.x + block*sign[i][0], 0,
             										  this.info.y + block*sign[i][1], 0);
             			}
             		}
