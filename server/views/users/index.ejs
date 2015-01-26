@@ -31,8 +31,8 @@
 	var ghost = [];
 	ghost[1] = new Ghost(270, 270, 38, 1);
 	ghost[2] = new Ghost(270, 330, 38, 2);
-	ghost[3] = new Ghost(240, 330, 38, 3);
-	ghost[4] = new Ghost(300, 330, 38, 4);
+	ghost[3] = new Ghost(240, 330, 39, 3);
+	ghost[4] = new Ghost(300, 330, 37, 4);
 
 	var upPac;
 	var upGho;
@@ -61,12 +61,12 @@
 	for (var j in ghost) {
 		ghost[j].draw(pacman);
 	}
-	// sound.start.play();
+	sound.start.play();
 
 	document.getElementById('start').onclick = function() {
 		this.innerHTML = '';
 		upPac = setInterval(pacLoop, 80);
-		upGho = setInterval(ghostLoop, 80);
+		upGho = setInterval(ghostLoop, 90);
 		mainTime = setInterval(timeLoop, 1000);
 		sound.background1.loop = true;
 		sound.background1.play();
@@ -151,6 +151,7 @@
 			document.getElementById('info').children[1].innerHTML = "Time: " + this.info.timeRemaining;
 			if (this.info.timeRemaining == 0){
 				sound.background1.pause();
+				sound.background1.pause();
 				sound.die.play();
 				clearInterval(upPac);
 				clearInterval(upGho);
@@ -177,10 +178,20 @@
 			}
 			else {
 				timer++;
-				if (timer === 50) {
+				if (timer >= 70 && timer < 90) {
+					for (var i in ghost) {
+						if (ghost[i].info.mode === 'frightened') {
+							ghost[i].info.mode = 'chase_warning';
+						}
+					}
+				}
+				else if (timer === 90) {
 					this.info.mode = 'chase';
+					for (var i in ghost) {
+						ghost[i].info.mode = 'chase';
+					}
 					clearInterval(upGho);
-					upGho = setInterval(ghostLoop, 80);
+					upGho = setInterval(ghostLoop, 90);
 					timer = 0;
 				}
 			}
@@ -254,10 +265,10 @@
 						sound.background2.loop = true;
 						sound.background2.play();
 						this.info.mode = 'frightened';
-						console.log('a');
 						for (var j in ghost) {
-							$('#enemy').html("<img class='ghost' src='images/ghost5.gif' style='top: " +
+							$('#enemy').html("<img class='ghost' src='images/ghost5.png' style='top: " +
 								ghost[j].info.y + "px; left: " + ghost[j].info.x + "px;'>");
+							ghost[j].info.mode = 'frightened';
 							// Forces ghost to reverse direction
 							if (ghost[j].info.pos <= 38) {
 								ghost[j].info.pos += 2;
@@ -266,7 +277,7 @@
 								ghost[j].info.pos -= 2;
 							}
 							clearInterval(upGho);
-							upGho = setInterval(ghostLoop, 100);
+							upGho = setInterval(ghostLoop, 120);
 						}
 					}
 					else {
@@ -284,6 +295,7 @@
 				clearInterval(mainTime);
 				$('#end').append("<p id='winner'>YOU WIN!!!</p>");
 				sound.background1.pause();
+				sound.background2.pause();
 				sound.end.play();
 				bonus = setInterval(timeBonus, 30);
 			}
@@ -304,7 +316,7 @@
 			for (var i in ghost) {
 				var delta = getDistance(this.info.x, ghost[i].info.x, this.info.y, ghost[i].info.y);
 				if (delta < 15) {
-					if (this.info.mode === 'chase' || this.info.mode === 'scatter') {
+					if (ghost[i].info.mode === 'chase' || ghost[i].info.mode === 'scatter') {
 						sound.background1.pause();
 						sound.die.play();
 						clearInterval(upGho);
@@ -315,10 +327,10 @@
 					}
 					else {
 						ghost[i].info.x = 270;
-						ghost[i].info.y = 360;
-						ghost[i].info.pos = 40;
-						ghost[i].info.pos_temp = 40;
-						this.info.mode = 'chase';
+						ghost[i].info.y = 330;
+						ghost[i].info.pos = 38;
+						ghost[i].info.pos_temp = 38;
+						ghost[i].info.mode = 'freeze';
 						this.info.score += 500;
 						sound.power.play();
 						document.getElementById('info').children[2].innerHTML = "Score: " + this.info.score;
@@ -329,16 +341,20 @@
 	}
 
 	function Ghost (x, y, pos, id) {
-		this.info = { id: id, x: x, y: y, pos: pos, pos_temp: pos, collision: false, mode: 'scatter' };
+		this.info = { id: id, x: x, y: y, pos: pos, pos_temp: pos, collision: false, mode: 'scatter', timer: 0 };
 		var timer = 0;
 
 		this.draw = function(pacman) {
-			if (pacman.info.mode === 'chase' || pacman.info.mode === 'scatter') {
+			if (this.info.mode === 'chase' || this.info.mode === 'scatter' || this.info.mode ==='freeze') {
 				$("#enemy" + this.info.id).html("<img class='ghost' src='images/ghost" + this.info.id + ".gif'" +
 					"style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
 			}
-			else {
+			else if (this.info.mode === 'chase_warning') {
 				$("#enemy" + this.info.id).html("<img class='ghost' src='images/ghost5.gif'" +
+					"style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
+			}
+			else {
+				$("#enemy" + this.info.id).html("<img class='ghost' src='images/ghost5.png'" +
 					"style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
 			}
 		}
@@ -364,23 +380,25 @@
 		}
 
 		this.move = function (game) {
-			var block = game.info.tile * game.info.conv;
-			var options = [-1, -1, 1, 1];
-			// Checks if going through tunnel
-			if (this.info.collision === undefined){
-				if (this.info.pos === 37){
-					this.info.x = game.map[0].length * block - block;
+			if (this.info.mode !== 'freeze') {
+				var block = game.info.tile * game.info.conv;
+				var options = [-1, -1, 1, 1];
+				// Checks if going through tunnel
+				if (this.info.collision === undefined){
+					if (this.info.pos === 37){
+						this.info.x = game.map[0].length * block - block;
+					}
+					else if (this.info.pos === 39) {
+						this.info.x = 0;
+					}
 				}
-				else if (this.info.pos === 39) {
-					this.info.x = 0;
-				}
-			}
-			else if (this.info.collision === false){
-				if (this.info.pos === 37 || this.info.pos === 39){
-					this.info.x += options[this.info.pos - 37] * game.info.tile;
-				}
-				else if (this.info.pos === 38 || this.info.pos === 40){
-					this.info.y += options[this.info.pos - 37] * game.info.tile;
+				else if (this.info.collision === false){
+					if (this.info.pos === 37 || this.info.pos === 39){
+						this.info.x += options[this.info.pos - 37] * game.info.tile;
+					}
+					else if (this.info.pos === 38 || this.info.pos === 40){
+						this.info.y += options[this.info.pos - 37] * game.info.tile;
+					}
 				}
 			}
 		}
@@ -403,12 +421,13 @@
             	this.info.pos_temp = 37;
 
             	// Calculate distance between ghost and 'target'
-            	if (pacman.info.mode === 'scatter') {
-            		timer++;
+            	if (this.info.mode === 'scatter') {
+            		this.info.timer++;
             		// Timer cap 30 instead of 90 because it's only checking a third of the time
-            		if (timer === 30) {
+            		if (this.info.timer === 30) {
+            			this.info.mode = 'chase';
             			pacman.info.mode = 'chase';
-            			timer = 0;
+            			this.info.timer = 0;
             		}
             		// Calculate distance between Pacman and top right tile
             		if (this.info.id === 1) {
@@ -426,6 +445,13 @@
             											  this.info.y + block*sign[i][1], 0);
             				}
             			}		
+            		}
+            	}
+            	else if (this.info.mode === 'freeze') {
+            		this.info.timer++;
+            		if (this.info.timer === 20) {
+            			this.info.mode = 'chase';
+            			this.info.timer = 0;
             		}
             	}
             	else {
@@ -519,7 +545,7 @@
             	}
 
             	// Determine best path depending on the mode
-            	if (pacman.info.mode === 'scatter' || pacman.info.mode === 'chase') {
+            	if (this.info.mode === 'scatter' || this.info.mode === 'chase') {
             		var min = 1000;
         			// Find shortest path
         			for (var i=0; i<4; i++) {
@@ -541,7 +567,7 @@
         				}
         			}
             	}
-            	else {
+            	else if (this.info.mode === 'frightened') {
 	            	var max = 0;
 	            	// Find longest path
 	            	for (var i=0; i<4; i++) {
