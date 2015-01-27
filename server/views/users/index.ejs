@@ -8,8 +8,7 @@
 	</head>
 	<body>
 		<div id='info'>
-			<h1 class='yellow'>PACMAN LITE</h1>
-			<h2 class='time'></h2>
+			<h1 class='yellow'>PACMAN</h1>
 			<h2 class='score'>Score: 0</h2>
 		</div>
 		<div id='container'></div>
@@ -315,7 +314,7 @@
 					}
 					game.coins.splice(i, 1);
 					document.getElementById('coins').removeChild(el);
-					document.getElementById('info').children[2].innerHTML = "Score: " + this.info.score;
+					document.getElementById('info').children[1].innerHTML = "Score: " + this.info.score;
 				}
 			}
 			// Pacman wins if he eats all the coins
@@ -377,7 +376,7 @@
 						ghost[i].info.timer = 0;
 						this.info.score += 500;
 						sound.power.play();
-						document.getElementById('info').children[2].innerHTML = "Score: " + this.info.score;
+						document.getElementById('info').children[1].innerHTML = "Score: " + this.info.score;
 					}
 				}
 			}

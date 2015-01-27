@@ -1,127 +1,26 @@
-* {
-	margin: 0px;
-	padding: 0px;
-	font-family: verdana;
-}
+* { margin: 0px; padding: 0px; font-family: PixelSplitter, verdana; }
+body { background-color: black; }
 
-body {
-	background-color: black;
-}
+#container { height: auto; width: 570px; }
+#info { position: relative; height: 30px; width: 570px; color: white; }
+#ready { position: absolute; top: 390px; left: 235px; color: yellow; font-size: 25px; }
+#winner { position: absolute; width: 400px; top: 150px; left: 85px; font-size: 50px; color: green; text-align: center; }
+#loser { position: absolute; width: 400px; top: 150px; left: 85px; font-size: 50px; color: red; text-align: center; }
 
-#container {
-	height: auto; width: 570px;
-}
+h1 { display: inline-block; vertical-align: top; width: 250px; font-size: 25px; }
+h2 { display: inline-block; vertical-align: top; width: 310px; font-size: 25px; }
+h2.score { text-align: right; }
+.yellow { color: yellow; }
 
-#info {
-	height: 30px; width: 570px;
-	position: relative;
-	color: white;
-}
+.start { position: absolute; background-color: yellow; height: 80px; width: 200px; top: 100px; left:185px; border: 3px solid black; border-radius: 10px; font-size: 25px; font-weight: 800; color: black }
+.brick { position: relative; float: left; background-color: blue; height: 26px; width: 26px; margin: 1px; border: 1px solid yellow; border-radius: 5px; }
+.door { position: relative; float: left; background-color: #FF99CC; height: 26px; width: 26px; margin: 1px; border: 1px solid yellow; border-radius: 5px; }
+.path { position: relative; float: left; background-color: black; height: 30px; width: 30px; }
 
-#ready {
-	position: absolute;
-	color: yellow;
-	font-size: 25px;
-	top: 390px;
-	left: 240px;
-}
+.pacman { position: absolute; height: 30px; width: 30px; }
+.ghost { position: absolute; height: 30px; width: 30px; }
+.coin { position: absolute; height: 8px; width: 8px; }
+.power { position: absolute; height: 30px; width: 30px; }
 
-h1 {
-	display: inline-block; vertical-align: top;
-	width: 200px;
-	font-size: 25px;
-}
 
-h2 {
-	display: inline-block; vertical-align: top;
-	width: 175px;
-	font-size: 25px;
-}
 
-h2.time {
-	text-align: center;
-}
-
-h2.score {
-	text-align: right;
-}
-
-.yellow {
-	color: yellow;
-}
-
-.start {
-	background-color: yellow;
-	height: 80px; width: 200px;
-	position: absolute;
-	top: 100px; left:185px;
-	border: 3px solid black;
-	border-radius: 10px;
-	font-size: 30px;
-	font-weight: 800;
-	color: black
-}
-
-.brick {
-	height: 26px; width: 26px;
-	position: relative; float: left;
-	margin: 1px;
-	text-align: right;
-	background-color: blue;
-	border: 1px solid yellow;
-	border-radius: 5px;
-}
-
-.door {
-	height: 26px; width: 26px;
-	position: relative; float: left;
-	margin: 1px;
-	text-align: right;
-	background-color: #FF99CC;
-	border: 1px solid yellow;
-	border-radius: 5px;
-}
-
-.path {
-	height: 30px; width: 30px;
-	position: relative; float: left;
-	background-color: black;
-}
-
-.coin {
-	height: 8px; width: 8px;
-	position: absolute;
-}
-
-.power {
-	height: 30px; width: 30px;
-	position: absolute;
-}
-
-.pacman {
-	height: 30px; width: 30px;
-	position: absolute;
-}
-
-.ghost {
-	height: 30px; width: 30px;
-	position: absolute;
-}
-
-#loser {
-	position: absolute;
-	top: 150px; left: 85px;
-	width: 400px;
-	font-size: 50px;
-	color: red;
-	text-align: center;
-}
-
-#winner {
-	position: absolute;
-	top: 150px; left: 85px;
-	width: 400px;
-	font-size: 50px;
-	color: green;
-	text-align: center;
-}
