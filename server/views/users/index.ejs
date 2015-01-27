@@ -9,12 +9,13 @@
 	<body>
 		<div id='info'>
 			<h1 class='yellow'>PACMAN LITE</h1>
-			<h2 class='time'>Time: 99</h2>
+			<h2 class='time'>Time: 0</h2>
 			<h2 class='score'>Score: 0</h2>
 		</div>
 		<div id='container'></div>
 		<div id='coins'></div>
 		<div id='hero'></div>
+		<div id='lives'></div>
 		<div id='enemy1'></div>
 		<div id='enemy2'></div>
 		<div id='enemy3'></div>
@@ -29,10 +30,6 @@
 	var game = new Game();
 	var pacman = new Pacman(270, 510, 37);
 	var ghost = [];
-	ghost[1] = new Ghost(270, 270, 38, 1);
-	ghost[2] = new Ghost(270, 330, 38, 2);
-	ghost[3] = new Ghost(240, 330, 39, 3);
-	ghost[4] = new Ghost(300, 330, 37, 4);
 
 	var upPac;
 	var upGho;
@@ -57,19 +54,12 @@
 	
 	game.drawMap();
 	game.drawCoins();
-	pacman.draw();
-	for (var j in ghost) {
-		ghost[j].draw(pacman);
-	}
-	sound.start.play();
+	game.initialize();
 
 	document.getElementById('start').onclick = function() {
 		this.innerHTML = '';
-		upPac = setInterval(pacLoop, 80);
-		upGho = setInterval(ghostLoop, 90);
+		sound.start.play();
 		mainTime = setInterval(timeLoop, 1000);
-		sound.background1.loop = true;
-		sound.background1.play();
 	}
 
 	document.onkeydown = function (e) {
@@ -80,7 +70,7 @@
 	}
 
 	function Game() {
-		this.info = { tile: 10, conv: 3, timer: 0, timeRemaining: 99 };
+		this.info = { tile: 10, conv: 3, timer: 0, timeRemaining: 0 };
 		this.coins = [];
 		this.map = [
 				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -92,7 +82,7 @@
 				[0,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0],
 				[0,0,0,0,1,0,0,0,9,0,9,0,0,0,1,0,0,0,0],
 				[9,9,9,0,1,0,9,9,9,9,9,9,9,0,1,0,9,9,9],
-				[0,0,0,0,1,0,9,0,0,9,0,0,9,0,1,0,0,0,0],
+				[0,0,0,0,1,0,9,0,0,2,0,0,9,0,1,0,0,0,0],
 				[7,9,9,9,1,9,9,0,9,9,9,0,9,9,1,9,9,9,7],
 				[0,0,0,0,1,0,9,0,0,0,0,0,9,0,1,0,0,0,0],
 				[9,9,9,0,1,0,9,9,9,9,9,9,9,0,1,0,9,9,9],
@@ -110,11 +100,14 @@
 		this.drawMap = function() {
 			for (var i=0; i<this.map.length; i++){
 				for (var j=0; j<this.map[i].length; j++){
-					if (this.map[i][j] == 1 || this.map[i][j] == 7 || this.map[i][j] == 9){
+					if (this.map[i][j] === 1 || this.map[i][j] === 7 || this.map[i][j] === 9) {
 						$('#container').append("<div class='path'></div>");
 					}
-					else if (this.map[i][j] == 0){
+					else if (this.map[i][j] === 0) {
 						$('#container').append("<div class='brick'></div>");
+					}
+					else if (this.map[i][j] === 2) {
+						$('#container').append("<div class='door'></div>");
 					}
 				}
 			}
@@ -146,28 +139,54 @@
             	"src='images/powerpellet.gif' style='top: 510px; left: 510px;'>");                   
 		}
 
-		this.timer = function(){
-			this.info.timeRemaining--;
-			document.getElementById('info').children[1].innerHTML = "Time: " + this.info.timeRemaining;
-			if (this.info.timeRemaining == 0){
-				sound.background1.pause();
-				sound.background1.pause();
-				sound.die.play();
-				clearInterval(upPac);
-				clearInterval(upGho);
-				clearInterval(mainTime);
-				$('#end').append("<p id='loser'>GAME OVER</p>");
+		this.initialize = function() {
+			ghost[1] = new Ghost(270, 270, 38, 1);
+			ghost[2] = new Ghost(270, 330, 38, 2);
+			ghost[3] = new Ghost(240, 330, 39, 3);
+			ghost[4] = new Ghost(300, 330, 37, 4);
+			pacman.draw();
+			pacman.drawLives();
+			for (var j in ghost) {
+				ghost[j].draw(pacman);
 			}
+		}
+
+		this.timer = function(){
+			this.info.timeRemaining++;
+			document.getElementById('info').children[1].innerHTML = "Time: " + this.info.timeRemaining;
+			if (this.info.timeRemaining === 4) {
+				upPac = setInterval(pacLoop, 80);
+				upGho = setInterval(ghostLoop, 90);
+				sound.background1.loop = true;
+				sound.background1.play();
+			}
+			// if (this.info.timeRemaining == 0){
+			// 	sound.background1.pause();
+			// 	sound.background1.pause();
+			// 	sound.die.play();
+			// 	clearInterval(upPac);
+			// 	clearInterval(upGho);
+			// 	clearInterval(mainTime);
+			// 	$('#end').append("<p id='loser'>GAME OVER</p>");
+			// }
 		}
 	}
 
 	function Pacman (x, y, pos) {
-		this.info = { x: x, y: y, pos: pos, pos_temp: pos, collision: false, mode: 'scatter', score: 0 };
+		this.info = { x: x, y: y, pos: pos, pos_temp: pos, collision: false, mode: 'scatter', score: 0, lives: 3 };
 		var timer = 0;
 
 		this.draw = function () {
 			$('#hero').html("<img class='pacman' src='images/pacman" + this.info.pos +
 				".gif' style='top: " + this.info.y + "px; left: " + this.info.x + "px;'>");
+		}
+
+		this.drawLives = function() {
+			$('#lives').html("");
+			for (var i=1; i<this.info.lives; i++) {
+				var posX = i * 30 - 30;
+				$('#lives').append("<img class='pacman' src='images/pacman37.png' style='top: 690px; left: " + posX + "px;'>");
+			}
 		}
 
 		this.update = function (game, ghost) {
@@ -297,33 +316,48 @@
 				sound.background1.pause();
 				sound.background2.pause();
 				sound.end.play();
-				bonus = setInterval(timeBonus, 30);
+				// bonus = setInterval(timeBonus, 30);
 			}
 
-			function timeBonus() {
-				that.info.score +=10;
-				game.info.timeRemaining--;
-				document.getElementById('info').children[2].innerHTML = "Score: " + that.info.score;
-				document.getElementById('info').children[1].innerHTML = "Time: " + game.info.timeRemaining;
-				sound.bonus.play();
-				if (game.info.timeRemaining === 0){
-					clearInterval(bonus);
-				}
-			}
+			// function timeBonus() {
+			// 	that.info.score +=10;
+			// 	game.info.timeRemaining--;
+			// 	document.getElementById('info').children[2].innerHTML = "Score: " + that.info.score;
+			// 	document.getElementById('info').children[1].innerHTML = "Time: " + game.info.timeRemaining;
+			// 	sound.bonus.play();
+			// 	if (game.info.timeRemaining === 0){
+			// 		clearInterval(bonus);
+			// 	}
+			// }
 		}
 
 		this.updateLife = function (game, ghost) {
+			var that = this;
 			for (var i in ghost) {
 				var delta = getDistance(this.info.x, ghost[i].info.x, this.info.y, ghost[i].info.y);
 				if (delta < 15) {
 					if (ghost[i].info.mode === 'chase' || ghost[i].info.mode === 'scatter') {
 						sound.background1.pause();
+						sound.background2.pause();
 						sound.die.play();
 						clearInterval(upGho);
 						clearInterval(upPac);
 						clearInterval(mainTime);
-						$('#end').append("<p id='loser'>GAME OVER</p>");
-						document.getElementById('hero').remove();
+						this.info.lives--;
+						if (this.info.lives === 0) {
+							$('#end').append("<p id='loser'>GAME OVER</p>");
+							document.getElementById('hero').remove();
+						}
+						else {
+							this.info.x = 270;
+							this.info.y = 510;
+							this.info.pos = 37;
+							// upPac = setInterval(pacLoop, 80);
+							// upGho = setInterval(ghostLoop, 90);
+							mainTime = setInterval(timeLoop, 1000);
+							game.info.timeRemaining = 2;
+							game.initialize();
+						}
 					}
 					else {
 						ghost[i].info.x = 270;
@@ -331,6 +365,7 @@
 						ghost[i].info.pos = 38;
 						ghost[i].info.pos_temp = 38;
 						ghost[i].info.mode = 'freeze';
+						ghost[i].info.timer = 0;
 						this.info.score += 500;
 						sound.power.play();
 						document.getElementById('info').children[2].innerHTML = "Score: " + this.info.score;
@@ -360,20 +395,20 @@
 		}
 
 		this.update = function (game, pacman, ghost) {
+			this.findPath(game, pacman, ghost);
 			if (this.info.id === 3) {
 				if (game.coins.length <= 126) {
-					this.findPath(game, pacman, ghost);
+					// this.findPath(game, pacman, ghost);
 					this.move(game);
 				}
 			}
 			else if (this.info.id === 4) {
 				if (game.coins.length <= 100) {
-					this.findPath(game, pacman, ghost);
+					// this.findPath(game, pacman, ghost);
 					this.move(game);
 				}
 			}
 			else {
-				this.findPath(game, pacman, ghost);
 				this.move(game);
 			}
 			this.draw(pacman);
@@ -446,12 +481,30 @@
             				}
             			}		
             		}
+            		else {
+            			this.info.mode = 'freeze';
+            			this.info.timer = 0;
+            		}
             	}
             	else if (this.info.mode === 'freeze') {
             		this.info.timer++;
-            		if (this.info.timer === 20) {
-            			this.info.mode = 'chase';
-            			this.info.timer = 0;
+            		if (this.info.id === 3) {
+            			if (this.info.timer === 60) {
+            				this.info.mode = 'chase';
+            				this.info.timer = 0;
+            			}
+            		}
+            		else if (this.info.id === 4) {
+            			if (this.info.timer === 90) {
+            				this.info.mode = 'chase';
+            				this.info.timer = 0;
+            			}
+            		}
+            		else {
+            			if (this.info.timer === 30) {
+            				this.info.mode = 'chase';
+            				this.info.timer = 0;
+            			}
             		}
             	}
             	else {
@@ -459,8 +512,15 @@
             		if (this.info.id === 1) {
             			for (var i=0; i<4; i++) {
             				if (options[i] !== 0) {
-            					distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
-            											  this.info.y + block*sign[i][1], pacman.info.y);
+            					// This prevents Ghost from going back into the ghost house
+            					if (options[3] !== 2) {
+            						distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
+            												  this.info.y + block*sign[i][1], pacman.info.y);
+            					}
+            					else if (i !== 3) {
+            						distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
+            												  this.info.y + block*sign[i][1], pacman.info.y);
+            					}
             				}
             			}
             		}
@@ -484,8 +544,15 @@
             			}
             			for (var i=0; i<4; i++) {
             				if (options[i] !== 0) {
-            					distance[i] = getDistance(this.info.x + block*sign[i][0], temp_x,
-            											  this.info.y + block*sign[i][1], temp_y);
+            					// This prevents Ghost from going back into the ghost house
+            					if (options[3] !== 2) {
+            						distance[i] = getDistance(this.info.x + block*sign[i][0], temp_x,
+            												  this.info.y + block*sign[i][1], temp_y);
+            					}
+            					else if (i !== 3) {
+        							distance[i] = getDistance(this.info.x + block*sign[i][0], temp_x,
+        													  this.info.y + block*sign[i][1], temp_y);
+            					}
             				}
             			}
             		}
@@ -496,8 +563,15 @@
         				if (temp_distance > 8 * block) {
         					for (var i=0; i<4; i++) {
         						if (options[i] !== 0) {
-        							distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
-        													  this.info.y + block*sign[i][1], pacman.info.y);
+        							// This prevents Ghost from going back into the ghost house
+	    							if (options[3] !== 2) {
+		    							distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
+		    													  this.info.y + block*sign[i][1], pacman.info.y);
+		    						}
+		    						else if (i !== 3) {
+	    								distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
+	    														  this.info.y + block*sign[i][1], pacman.info.y);
+	    							}
         						}
         					}
         				}
@@ -505,8 +579,15 @@
         				else {
         					for (var i=0; i<4; i++) {
         						if (options[i] !== 0) {
-        							distance[i] = getDistance(this.info.x + block*sign[i][0], 0,
-        													  this.info.y + block*sign[i][1], game.map.length * block);
+        							// This prevents Ghost from going back into the ghost house
+        							if (options[3] !== 2) {
+	        							distance[i] = getDistance(this.info.x + block*sign[i][0], 0,
+	        													  this.info.y + block*sign[i][1], game.map.length * block);
+	        						}
+	        						else if (i !== 3) {
+        								distance[i] = getDistance(this.info.x + block*sign[i][0], 0,
+        														  this.info.y + block*sign[i][1], game.map.length * block);
+        							}
         						}
         					}	
         				}
@@ -537,8 +618,15 @@
             			temp_y = 2 * temp_y - ghost[1].info.y;
             			for (var i=0; i<4; i++) {
             				if (options[i] !== 0) {
-            					distance[i] = getDistance(this.info.x + block*sign[i][0], temp_x,
-            											  this.info.y + block*sign[i][1], temp_y);
+            					// This prevents Ghost from going back into the ghost house
+            					if (options[3] !== 2) {
+	            					distance[i] = getDistance(this.info.x + block*sign[i][0], temp_x,
+	            											  this.info.y + block*sign[i][1], temp_y);
+	            				}
+	            				else if (i !== 3) {
+            						distance[i] = getDistance(this.info.x + block*sign[i][0], temp_x,
+            												  this.info.y + block*sign[i][1], temp_y);
+            					}
             				}
             			}
             		}
@@ -546,28 +634,42 @@
 
             	// Determine best path depending on the mode
             	if (this.info.mode === 'scatter' || this.info.mode === 'chase') {
-            		var min = 1000;
-        			// Find shortest path
-        			for (var i=0; i<4; i++) {
-        				if (distance[i] < min) {
-        					min = distance[i];
-        					this.info.pos_temp = 37 + i;
-        				}
-        			}
+            		if (this.info.x === 240 && this.info.y === 330) {
+            			this.info.pos_temp = 39;
+            		}
+            		else if (this.info.x === 270 && this.info.y === 330) {
+            			this.info.pos_temp = 38;
+            		}
+            		else if (this.info.x === 300 && this.info.y === 330) {
+            			this.info.pos_temp = 37;
+            		}
+            		else if (this.info.x === 270 && this.info.y === 300) {
+            			this.info.pos_temp = 38;
+            		}
+            		else {
+			    		var min = 1000;
+						// Find shortest path
+						for (var i=0; i<4; i++) {
+							if (distance[i] < min) {
+								min = distance[i];
+								this.info.pos_temp = 37 + i;
+							}
+						}
 
-        			// If shortest path requires backtracking, need to find next shortest path
-        			if (Math.abs(this.info.pos - this.info.pos_temp) === 2) {
-        				distance[this.info.pos_temp - 37] = 1000;
-        				min = 1000;
-        				for (var i=0; i<4; i++) {
-        					if (distance[i] < min) {
-        						min = distance[i];
-        						this.info.pos_temp = 37 + i;
-        					}
-        				}
-        			}
+						// If shortest path requires backtracking, need to find next shortest path
+						if (Math.abs(this.info.pos - this.info.pos_temp) === 2) {
+							distance[this.info.pos_temp - 37] = 1000;
+							min = 1000;
+							for (var i=0; i<4; i++) {
+								if (distance[i] < min) {
+									min = distance[i];
+									this.info.pos_temp = 37 + i;
+								}
+							}
+						}	
+            		}
             	}
-            	else if (this.info.mode === 'frightened') {
+            	else if (this.info.mode === 'frightened' || this.info.mode === 'chase_warning') {
 	            	var max = 0;
 	            	// Find longest path
 	            	for (var i=0; i<4; i++) {
