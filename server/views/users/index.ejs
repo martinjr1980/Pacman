@@ -9,7 +9,7 @@
 	<body>
 		<div id='info'>
 			<h1 class='yellow'>PACMAN LITE</h1>
-			<h2 class='time'>Time: 0</h2>
+			<h2 class='time'></h2>
 			<h2 class='score'>Score: 0</h2>
 		</div>
 		<div id='container'></div>
@@ -20,13 +20,14 @@
 		<div id='enemy2'></div>
 		<div id='enemy3'></div>
 		<div id='enemy4'></div>
-		<div id='end'></div>
 		<div id='start'><button class='start'>Click to Start</button></div>
+		<div id='ready'>READY!</div>
+		<div id='end'></div>
 	</body>
 </html>
 
 <script type="text/javascript">
-	// Global variable (mainly for setInterval)
+	// Global variables (mainly for setInterval)
 	var game = new Game();
 	var pacman = new Pacman(270, 510, 37);
 	var ghost = [];
@@ -34,13 +35,20 @@
 	var upPac;
 	var upGho;
 	var mainTime;
-	var pacLoop = function() { pacman.update(game, ghost); }
+
+	var pacLoop = function() { 
+		pacman.update(game, ghost);
+	}
+
 	var ghostLoop = function() {
 		for (var i in ghost) {
 			ghost[i].update(game, pacman, ghost);
 		}
 	}
-	var timeLoop = function() { game.timer(); }
+
+	var timeLoop = function() {
+		game.timer();
+	}
 
 	var sound = {};
 	sound.start = new Audio('sounds/pacman_beginning.wav');
@@ -50,7 +58,6 @@
     sound.power = new Audio('sounds/pacman_eatghost.wav')
     sound.die = new Audio('sounds/pacman_death.wav');
     sound.end = new Audio('sounds/pacman_intermission.wav');
-    sound.bonus = new Audio('sounds/add_coins.wav');
 	
 	game.drawMap();
 	game.drawCoins();
@@ -70,7 +77,7 @@
 	}
 
 	function Game() {
-		this.info = { tile: 10, conv: 3, timer: 0, timeRemaining: 0 };
+		this.info = { tile: 10, conv: 3, timeElapsed: 0 };
 		this.coins = [];
 		this.map = [
 				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -98,16 +105,16 @@
 		];
 
 		this.drawMap = function() {
-			for (var i=0; i<this.map.length; i++){
-				for (var j=0; j<this.map[i].length; j++){
+			for (var i=0; i<this.map.length; i++) {
+				for (var j=0; j<this.map[i].length; j++) {
 					if (this.map[i][j] === 1 || this.map[i][j] === 7 || this.map[i][j] === 9) {
 						$('#container').append("<div class='path'></div>");
 					}
-					else if (this.map[i][j] === 0) {
-						$('#container').append("<div class='brick'></div>");
-					}
 					else if (this.map[i][j] === 2) {
 						$('#container').append("<div class='door'></div>");
+					}
+					else if (this.map[i][j] === 0) {
+						$('#container').append("<div class='brick'></div>");
 					}
 				}
 			}
@@ -115,9 +122,9 @@
 
 		this.drawCoins = function() {
             var id = 1;
-            for (var i=0; i<(this.map.length); i++){
-            	for (var j=0; j<(this.map[i].length); j++){
-            		if (this.map[i][j] == 1){
+            for (var i=0; i<(this.map.length); i++) {
+            	for (var j=0; j<(this.map[i].length); j++) {
+            		if (this.map[i][j] == 1) {
             			var posY = i*30+42;
             			var posX = j*30+12;
             			$('#coins').append("<img id='" + id + "' class='coin'" +
@@ -128,7 +135,7 @@
             	}
             }
 
-            // This replaces the coins from 4 special areas with power pellets
+            // This replaces the coins with power pellets
             $("img[id='23']").replaceWith("<img id='23' class='power'" +
             	"src='images/powerpellet.gif' style='top: 120px; left: 30px;'>");
             $("img[id='28']").replaceWith("<img id='28' class='power'" +
@@ -151,24 +158,15 @@
 			}
 		}
 
-		this.timer = function(){
-			this.info.timeRemaining++;
-			document.getElementById('info').children[1].innerHTML = "Time: " + this.info.timeRemaining;
-			if (this.info.timeRemaining === 4) {
+		this.timer = function() {
+			this.info.timeElapsed++;
+			if (this.info.timeElapsed === 4) {
 				upPac = setInterval(pacLoop, 80);
 				upGho = setInterval(ghostLoop, 90);
 				sound.background1.loop = true;
 				sound.background1.play();
+				$('#ready').html('');
 			}
-			// if (this.info.timeRemaining == 0){
-			// 	sound.background1.pause();
-			// 	sound.background1.pause();
-			// 	sound.die.play();
-			// 	clearInterval(upPac);
-			// 	clearInterval(upGho);
-			// 	clearInterval(mainTime);
-			// 	$('#end').append("<p id='loser'>GAME OVER</p>");
-			// }
 		}
 	}
 
@@ -182,7 +180,7 @@
 		}
 
 		this.drawLives = function() {
-			$('#lives').html("");
+			$('#lives').html('');
 			for (var i=1; i<this.info.lives; i++) {
 				var posX = i * 30 - 30;
 				$('#lives').append("<img class='pacman' src='images/pacman37.png' style='top: 690px; left: " + posX + "px;'>");
@@ -190,6 +188,7 @@
 		}
 
 		this.update = function (game, ghost) {
+			// Sets proper music for chase & scatter mode
 			if (this.info.mode === 'chase' || this.info.mode === 'scatter') {
 				sound.background2.pause();
 				sound.background1.loop = true;
@@ -197,6 +196,7 @@
 			}
 			else {
 				timer++;
+				// Ghosts will start to flash to warn Pacman they will go back to chase mode soon
 				if (timer >= 70 && timer < 90) {
 					for (var i in ghost) {
 						if (ghost[i].info.mode === 'frightened') {
@@ -204,6 +204,7 @@
 						}
 					}
 				}
+				// Resets ghosts back to chase mode
 				else if (timer === 90) {
 					this.info.mode = 'chase';
 					for (var i in ghost) {
@@ -235,6 +236,7 @@
             	var options = [left, up, right, down];
             	// This means user is trying to change directions
 	            if (this.info.pos !== this.info.pos_temp) {
+	            	// If next block is a path, it will change Pacman's position accordingly
 	            	if (options[this.info.pos_temp - 37] === 1 || options[this.info.pos_temp - 37] === 9) {
 	            		this.info.pos = this.info.pos_temp;
 	            	}
@@ -252,19 +254,21 @@
 		this.move = function (game) {
 			var block = game.info.tile * game.info.conv;
 			var sign = [-1, -1, 1, 1];
-			if (this.info.collision === undefined){
-				if (this.info.pos === 37){
+			// Checks if next block is a tunnel
+			if (this.info.collision === undefined) {
+				if (this.info.pos === 37) {
 					this.info.x = game.map[0].length * block - block;
 				}
 				else if (this.info.pos === 39) {
 					this.info.x = 0;
 				}
 			}
+			// Only moves Pacman if next block is a path
 			else if (this.info.collision === false){
-				if (this.info.pos === 37 || this.info.pos === 39){
+				if (this.info.pos === 37 || this.info.pos === 39) {
 					this.info.x += sign[this.info.pos - 37] * game.info.tile;
 				}
-				else if (this.info.pos === 38 || this.info.pos === 40){
+				else if (this.info.pos === 38 || this.info.pos === 40) {
 					this.info.y += sign[this.info.pos - 37] * game.info.tile;
 				}
 			}
@@ -272,21 +276,25 @@
 
 		this.updateCoins = function (game, ghost) {
 			var that = this;
-			var bonus;
-			for (var i in game.coins){
+			for (var i in game.coins) {
 				var delta = getDistance(this.info.x+15, game.coins[i].x, this.info.y+15, game.coins[i].y);
-				if (delta <= 6){
+				// This means Pacman touched a coin or power pellet
+				if (delta <= 6) {
 					var el = document.getElementById(game.coins[i].id);
 					var id = game.coins[i].id;
-					if (id === 23 || id === 28 || id === 102 || id === 115){
+					// This means Pacman ate a power pellet
+					if (id === 23 || id === 28 || id === 102 || id === 115) {
+						timer = 0;
 						this.info.score += 100;
 						sound.background1.pause();
 						sound.background2.loop = true;
 						sound.background2.play();
 						this.info.mode = 'frightened';
 						for (var j in ghost) {
+							// Turns all ghosts blue to signify frightened mode
 							$('#enemy').html("<img class='ghost' src='images/ghost5.png' style='top: " +
 								ghost[j].info.y + "px; left: " + ghost[j].info.x + "px;'>");
+
 							ghost[j].info.mode = 'frightened';
 							// Forces ghost to reverse direction
 							if (ghost[j].info.pos <= 38) {
@@ -295,10 +303,12 @@
 							else {
 								ghost[j].info.pos -= 2;
 							}
+							// Ghosts are slightly slower in frightened mode
 							clearInterval(upGho);
 							upGho = setInterval(ghostLoop, 120);
 						}
 					}
+					// This means Pacman ate a coin
 					else {
 						this.info.score += 10;
 						sound.eat.play();
@@ -308,6 +318,7 @@
 					document.getElementById('info').children[2].innerHTML = "Score: " + this.info.score;
 				}
 			}
+			// Pacman wins if he eats all the coins
 			if (game.coins.length === 0){
 				clearInterval(upGho);
 				clearInterval(upPac);
@@ -316,26 +327,16 @@
 				sound.background1.pause();
 				sound.background2.pause();
 				sound.end.play();
-				// bonus = setInterval(timeBonus, 30);
 			}
-
-			// function timeBonus() {
-			// 	that.info.score +=10;
-			// 	game.info.timeRemaining--;
-			// 	document.getElementById('info').children[2].innerHTML = "Score: " + that.info.score;
-			// 	document.getElementById('info').children[1].innerHTML = "Time: " + game.info.timeRemaining;
-			// 	sound.bonus.play();
-			// 	if (game.info.timeRemaining === 0){
-			// 		clearInterval(bonus);
-			// 	}
-			// }
 		}
 
 		this.updateLife = function (game, ghost) {
 			var that = this;
 			for (var i in ghost) {
 				var delta = getDistance(this.info.x, ghost[i].info.x, this.info.y, ghost[i].info.y);
+				// This means Pacman touched a ghost
 				if (delta < 15) {
+					// This means the ghost ate Pacman
 					if (ghost[i].info.mode === 'chase' || ghost[i].info.mode === 'scatter') {
 						sound.background1.pause();
 						sound.background2.pause();
@@ -344,26 +345,34 @@
 						clearInterval(upPac);
 						clearInterval(mainTime);
 						this.info.lives--;
+						// Game is over only after Pacman loses all 3 lives
 						if (this.info.lives === 0) {
 							$('#end').append("<p id='loser'>GAME OVER</p>");
 							document.getElementById('hero').remove();
 						}
+						// Otherwise game resets Pacman and ghosts to starting positions
 						else {
 							this.info.x = 270;
 							this.info.y = 510;
 							this.info.pos = 37;
-							// upPac = setInterval(pacLoop, 80);
-							// upGho = setInterval(ghostLoop, 90);
 							mainTime = setInterval(timeLoop, 1000);
-							game.info.timeRemaining = 2;
+							game.info.timeElapsed = 2;
+							$('#ready').html("READY!");
 							game.initialize();
 						}
 					}
+					// This means Pacman ate the ghost and it will return to the ghost house
 					else {
-						ghost[i].info.x = 270;
+						if (ghost[i].info.id === 1 || ghost[i].info.id === 2) {
+							ghost[i].info.x = 270;
+						}
+						else if (ghost[i].info.id === 3) {
+							ghost[i].info.x = 240;
+						}
+						else {
+							ghost[i].info.x = 300;
+						}
 						ghost[i].info.y = 330;
-						ghost[i].info.pos = 38;
-						ghost[i].info.pos_temp = 38;
 						ghost[i].info.mode = 'freeze';
 						ghost[i].info.timer = 0;
 						this.info.score += 500;
@@ -376,7 +385,7 @@
 	}
 
 	function Ghost (x, y, pos, id) {
-		this.info = { id: id, x: x, y: y, pos: pos, pos_temp: pos, collision: false, mode: 'scatter', timer: 0 };
+		this.info = { id: id, x: x, y: y, pos: pos, pos_temp: pos, collision: false, mode: 'scatter' };
 		var timer = 0;
 
 		this.draw = function(pacman) {
@@ -396,15 +405,15 @@
 
 		this.update = function (game, pacman, ghost) {
 			this.findPath(game, pacman, ghost);
+			// Clyde only comes out of the ghost house after Pacman has eaten 30 coins
 			if (this.info.id === 3) {
 				if (game.coins.length <= 126) {
-					// this.findPath(game, pacman, ghost);
 					this.move(game);
 				}
 			}
+			// Inky only comes out of the ghost house after Pacman has eaten 56 coins
 			else if (this.info.id === 4) {
 				if (game.coins.length <= 100) {
-					// this.findPath(game, pacman, ghost);
 					this.move(game);
 				}
 			}
@@ -427,7 +436,8 @@
 						this.info.x = 0;
 					}
 				}
-				else if (this.info.collision === false){
+				// Only moves ghost if the next block is a path
+				else if (this.info.collision === false) {
 					if (this.info.pos === 37 || this.info.pos === 39){
 						this.info.x += options[this.info.pos - 37] * game.info.tile;
 					}
@@ -456,15 +466,18 @@
             	this.info.pos_temp = 37;
 
             	// Calculate distance between ghost and 'target'
+            	// Ghosts start off in scatter mode and...
             	if (this.info.mode === 'scatter') {
-            		this.info.timer++;
-            		// Timer cap 30 instead of 90 because it's only checking a third of the time
-            		if (this.info.timer === 30) {
+            		timer++;
+            		// After 7 seconds, they change to chase mode
+            		// Timer max is 30 instead of 90 because it's only checking a third of the time
+            		if (timer === 30) {
             			this.info.mode = 'chase';
             			pacman.info.mode = 'chase';
-            			this.info.timer = 0;
+            			timer = 0;
             		}
-            		// Calculate distance between Pacman and top right tile
+
+            		// Calculate distance between Blinky and top right tile
             		if (this.info.id === 1) {
             			for (var i=0; i<4; i++) {
             				if (options[i] !== 0) {
@@ -473,6 +486,7 @@
             				}
             			}
             		}
+            		// Calculate distance between Pinky and top left tile
             		else if (this.info.id === 2) {
             			for (var i=0; i<4; i++) {
             				if (options[i] !== 0) {
@@ -481,43 +495,43 @@
             				}
             			}		
             		}
+            		// Keeps Clyde and Inky in the ghost house at the start of the game
             		else {
             			this.info.mode = 'freeze';
-            			this.info.timer = 0;
+            			timer = 0;
             		}
             	}
+            	// If ghosts are in freeze mode (also after getting eaten), they come out of the ghost house at different times
             	else if (this.info.mode === 'freeze') {
-            		this.info.timer++;
+            		timer++;
             		if (this.info.id === 3) {
-            			if (this.info.timer === 60) {
+            			if (timer === 60) {
             				this.info.mode = 'chase';
-            				this.info.timer = 0;
+            				timer = 0;
             			}
             		}
             		else if (this.info.id === 4) {
-            			if (this.info.timer === 90) {
+            			if (timer === 90) {
             				this.info.mode = 'chase';
-            				this.info.timer = 0;
+            				timer = 0;
             			}
             		}
             		else {
-            			if (this.info.timer === 30) {
+            			if (timer === 30) {
             				this.info.mode = 'chase';
-            				this.info.timer = 0;
+            				timer = 0;
             			}
             		}
             	}
+            	// This means ghosts are in chase or frightened mode (utilizes same algorithm for target tile)
             	else {
             		// Blinky's (Red) target is Pacman's current tile
             		if (this.info.id === 1) {
             			for (var i=0; i<4; i++) {
+            				// Only considers valid options (not bricks)
             				if (options[i] !== 0) {
-            					// This prevents Ghost from going back into the ghost house
-            					if (options[3] !== 2) {
-            						distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
-            												  this.info.y + block*sign[i][1], pacman.info.y);
-            					}
-            					else if (i !== 3) {
+            					// This prevents ghost from going back into the ghost house
+            					if (options[3] !== 2 || i !== 3) {
             						distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
             												  this.info.y + block*sign[i][1], pacman.info.y);
             					}
@@ -529,29 +543,25 @@
             			var temp_x = pacman.info.x;
             			var temp_y = pacman.info.y;
             			if (pacman.info.pos === 37) {
-            				temp_x = pacman.info.x - 4 * block;
+            				temp_x -= 4 * block;
             			}
             			// Shifting 4 tiles to left and 4 tiles up due to overflow error in original game
             			else if (pacman.info.pos === 38) {
-            				temp_y = pacman.info.y - 4 * block;
-            				temp_x = pacman.info.x - 4 * block;
+            				temp_y -= 4 * block;
+            				temp_x -= 4 * block;
             			}
             			else if (pacman.info.pos === 39) {
-            				temp_x = pacman.info.x + 4 * block;
+            				temp_x += 4 * block;
             			}
             			else {
-            				temp_y = pacman.info.y + 4 * block;
+            				temp_y += 4 * block;
             			}
             			for (var i=0; i<4; i++) {
             				if (options[i] !== 0) {
-            					// This prevents Ghost from going back into the ghost house
-            					if (options[3] !== 2) {
+            					// This prevents ghost from going back into the ghost house
+            					if (options[3] !== 2 || i !==3 ) {
             						distance[i] = getDistance(this.info.x + block*sign[i][0], temp_x,
             												  this.info.y + block*sign[i][1], temp_y);
-            					}
-            					else if (i !== 3) {
-        							distance[i] = getDistance(this.info.x + block*sign[i][0], temp_x,
-        													  this.info.y + block*sign[i][1], temp_y);
             					}
             				}
             			}
@@ -563,15 +573,11 @@
         				if (temp_distance > 8 * block) {
         					for (var i=0; i<4; i++) {
         						if (options[i] !== 0) {
-        							// This prevents Ghost from going back into the ghost house
-	    							if (options[3] !== 2) {
+        							// This prevents ghost from going back into the ghost house
+	    							if (options[3] !== 2 || i !== 3) {
 		    							distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
 		    													  this.info.y + block*sign[i][1], pacman.info.y);
 		    						}
-		    						else if (i !== 3) {
-	    								distance[i] = getDistance(this.info.x + block*sign[i][0], pacman.info.x,
-	    														  this.info.y + block*sign[i][1], pacman.info.y);
-	    							}
         						}
         					}
         				}
@@ -579,15 +585,11 @@
         				else {
         					for (var i=0; i<4; i++) {
         						if (options[i] !== 0) {
-        							// This prevents Ghost from going back into the ghost house
-        							if (options[3] !== 2) {
+        							// This prevents ghost from going back into the ghost house
+        							if (options[3] !== 2 || i !== 3) {
 	        							distance[i] = getDistance(this.info.x + block*sign[i][0], 0,
 	        													  this.info.y + block*sign[i][1], game.map.length * block);
 	        						}
-	        						else if (i !== 3) {
-        								distance[i] = getDistance(this.info.x + block*sign[i][0], 0,
-        														  this.info.y + block*sign[i][1], game.map.length * block);
-        							}
         						}
         					}	
         				}
@@ -598,35 +600,31 @@
             			var temp_x = pacman.info.x;
             			var temp_y = pacman.info.y;
             			if (pacman.info.pos === 37) {
-            				temp_x = pacman.info.x - 2 * block;
+            				temp_x -= 2 * block;
             			}
             			// Shifting 2 tiles to left and 2 tiles up due to overflow error in original game
             			else if (pacman.info.pos === 38) {
-            				temp_y = pacman.info.y - 2 * block;
-            				temp_x = pacman.info.x - 2 * block;
+            				temp_y -= 2 * block;
+            				temp_x -= 2 * block;
             			}
             			else if (pacman.info.pos === 39) {
-            				temp_x = pacman.info.x + 2 * block;
+            				temp_x += 2 * block;
             			}
             			else {
-            				temp_y = pacman.info.y + 2 * block;
+            				temp_y += 2 * block;
             			}
 
-            			// Draw a line from Blinky's current position to this target tile and double it
-            			// That becomes the actual target tile for Inky
+            			// Draw a line from Blinky's current position to this target square and double it
+            			// That becomes the actual target square for Inky
             			temp_x = 2 * temp_x - ghost[1].info.x;
             			temp_y = 2 * temp_y - ghost[1].info.y;
             			for (var i=0; i<4; i++) {
             				if (options[i] !== 0) {
-            					// This prevents Ghost from going back into the ghost house
-            					if (options[3] !== 2) {
+            					// This prevents ghost from going back into the ghost house
+            					if (options[3] !== 2 || i !== 3) {
 	            					distance[i] = getDistance(this.info.x + block*sign[i][0], temp_x,
 	            											  this.info.y + block*sign[i][1], temp_y);
 	            				}
-	            				else if (i !== 3) {
-            						distance[i] = getDistance(this.info.x + block*sign[i][0], temp_x,
-            												  this.info.y + block*sign[i][1], temp_y);
-            					}
             				}
             			}
             		}
@@ -634,21 +632,22 @@
 
             	// Determine best path depending on the mode
             	if (this.info.mode === 'scatter' || this.info.mode === 'chase') {
+            		// Customize ghost's movement until he exits the ghost house
             		if (this.info.x === 240 && this.info.y === 330) {
             			this.info.pos_temp = 39;
             		}
             		else if (this.info.x === 270 && this.info.y === 330) {
             			this.info.pos_temp = 38;
             		}
-            		else if (this.info.x === 300 && this.info.y === 330) {
-            			this.info.pos_temp = 37;
-            		}
             		else if (this.info.x === 270 && this.info.y === 300) {
             			this.info.pos_temp = 38;
             		}
+            		else if (this.info.x === 300 && this.info.y === 330) {
+            			this.info.pos_temp = 37;
+            		}
+            		// Finds shortest path
             		else {
 			    		var min = 1000;
-						// Find shortest path
 						for (var i=0; i<4; i++) {
 							if (distance[i] < min) {
 								min = distance[i];
@@ -669,27 +668,39 @@
 						}	
             		}
             	}
+            	// Finds longest path
             	else if (this.info.mode === 'frightened' || this.info.mode === 'chase_warning') {
-	            	var max = 0;
-	            	// Find longest path
-	            	for (var i=0; i<4; i++) {
-	            		if (distance[i] > max) {
-	            			max = distance[i];
-	            			this.info.pos_temp = 37 + i;
-	            		}
-	            	}
+            		// Keeps ghost in ghost house if he is in frightened mode
+            		if (this.info.x === 240 && this.info.y === 330) {
+            			this.info.pos_temp = 39;
+            		}
+            		else if (this.info.x === 270 && this.info.y === 330) {
+            			this.info.pos_temp = 37;
+            		}
+            		else if (this.info.x === 300 && this.info.y === 330) {
+            			this.info.pos_temp = 37;
+            		}
+            		else {
+            			var max = 0;
+            			for (var i=0; i<4; i++) {
+            				if (distance[i] > max) {
+            					max = distance[i];
+            					this.info.pos_temp = 37 + i;
+            				}
+            			}
 
-	            	// If longest path requires backtracking, need to find next longest path
-	            	if (Math.abs(this.info.pos - this.info.pos_temp) === 2) {
-	            		distance[this.info.pos_temp - 37] = 0;
-	            		max = 0;
-	            		for (var i=0; i<4; i++) {
-	            			if (distance[i] > max) {
-	            				max = distance[i];
-	            				this.info.pos_temp = 37 + i;
-	            			}
-	            		}
-	            	}
+            			// If longest path requires backtracking, need to find next longest path
+            			if (Math.abs(this.info.pos - this.info.pos_temp) === 2) {
+            				distance[this.info.pos_temp - 37] = 0;
+            				max = 0;
+            				for (var i=0; i<4; i++) {
+            					if (distance[i] > max) {
+            						max = distance[i];
+            						this.info.pos_temp = 37 + i;
+            					}
+            				}
+            			}
+            		}
             	}
             	// After all the calculations, update ghost's position
             	this.info.pos = this.info.pos_temp;

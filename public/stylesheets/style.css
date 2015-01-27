@@ -18,6 +18,14 @@ body {
 	color: white;
 }
 
+#ready {
+	position: absolute;
+	color: yellow;
+	font-size: 25px;
+	top: 390px;
+	left: 240px;
+}
+
 h1 {
 	display: inline-block; vertical-align: top;
 	width: 200px;
