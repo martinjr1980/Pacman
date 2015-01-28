@@ -1,6 +1,14 @@
 * { margin: 0px; padding: 0px; font-family: PixelSplitter, verdana; }
 body { background-color: black; }
 
+#wrapper { height: auto; width: 570px; }
+#title { height: 120px; width: 500px; background-image: url('./../images/logo.png'); background-size: contain; background-repeat: no-repeat; margin: 150px auto; margin-bottom: 50px; }
+#content { font-size: 30px; color: white; margin-left: 110px; }
+.select { height: 30px; width: 30px; background-image: url('./../images/arrow.png'); background-size: contain; background-repeat: no-repeat; margin-right: 10px; }
+.no-select { height: 30px; width: 30px; margin-right: 10px; }
+.jerco { font-family: HighlandGothicFLF; color: red; font-size: 50px; margin-left: 80px; }
+a { text-decoration: none; color: white;}
+
 #container { height: auto; width: 570px; }
 #info { position: relative; height: 30px; width: 570px; color: white; }
 #ready { position: absolute; top: 390px; left: 235px; color: yellow; font-size: 25px; }
@@ -11,6 +19,7 @@ h1 { display: inline-block; vertical-align: top; width: 250px; font-size: 25px; 
 h2 { display: inline-block; vertical-align: top; width: 310px; font-size: 25px; }
 h2.score { text-align: right; }
 .yellow { color: yellow; }
+
 
 .start { position: absolute; background-color: yellow; height: 80px; width: 200px; top: 100px; left:185px; border: 3px solid black; border-radius: 10px; font-size: 25px; font-weight: 800; color: black }
 .brick { position: relative; float: left; background-color: blue; height: 26px; width: 26px; margin: 1px; border: 1px solid yellow; border-radius: 5px; }

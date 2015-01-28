@@ -9,6 +9,11 @@ var bodyParser = require('body-parser');
 
 var app = express();
 
+var server = app.listen(process.env.PORT || 3000);
+var io = require('socket.io').listen(server);
+// do this line before line 31 as to not always get errors with routing :)
+var routes = require('./config/routes')(app,io);
+
 // view engine setup
 // Whenever you render a page, it will take the view names from the directory I specify below
 app.set('views', path.join(__dirname, './server/views'));
@@ -23,8 +28,6 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 // app.use(methodOverride('X-HTTP-Method-Override'));  
 
-// do this line before line 29 as to not always get errors with routing :)
-var routes = require('./config/routes')(app);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
     var err = new Error('Not Found');
@@ -50,10 +53,4 @@ app.use(function(err, req, res, next) {
         message: err.message,
         error: {}
     });
-});
-
-app.set('port', process.env.PORT || 3000);
-
-var server = app.listen(app.get('port'), function() {
-  console.log('Express server listening on port ' + server.address().port);
 });
