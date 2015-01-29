@@ -3,10 +3,10 @@ body { background-color: black; }
 
 #wrapper { height: auto; width: 570px; }
 #title { height: 120px; width: 500px; background-image: url('./../images/logo.png'); background-size: contain; background-repeat: no-repeat; margin: 150px auto; margin-bottom: 50px; }
-#content { font-size: 30px; color: white; margin-left: 110px; }
+#content { font-size: 30px; color: white; margin-left: 150px; }
 .select { height: 30px; width: 30px; background-image: url('./../images/arrow.png'); background-size: contain; background-repeat: no-repeat; margin-right: 10px; }
 .no-select { height: 30px; width: 30px; margin-right: 10px; }
-.jerco { font-family: HighlandGothicFLF; color: red; font-size: 50px; margin-left: 80px; }
+.jerco { font-family: HighlandGothicFLF; color: red; font-size: 50px; margin-left: 40px; }
 a { text-decoration: none; color: white;}
 
 #container { height: auto; width: 570px; }
