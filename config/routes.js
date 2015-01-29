@@ -14,6 +14,7 @@ module.exports = function Routes (app, io) {
 	
 	var users = {};
 	var coins = [];
+	var count = 0;
 	var map = [
             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
             [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
@@ -51,12 +52,21 @@ module.exports = function Routes (app, io) {
 
 	io.on('connection', function (socket) {
 		socket.on('login', function (data) {
-			var info = { x: 30, y: 60, pos: 39, id: socket.id, collision: false, power: false, score: 0 };
+			count++;
+			if (count === 1) {
+				var info = { x: 30, y: 60, pos: 39, id: socket.id, collision: false, power: false, score: 0 };
+			}
+			else {
+				var info = { x: 1140, y: 60, pos: 37, id: socket.id, collision: false, power: false, score: 0 };
+			}
 			var user = { name: data.name, info: info };
 			socket.emit('current_user', { name: data.name, info: info, map: map, coins: coins });
 			socket.emit('all_users', { users: users });
 			socket.broadcast.emit('new_user', { user: user, users: users });
 			users[socket.id] = user;
+			if (count == 2) {
+				io.emit('start_game', { users: users });
+			}
 		})
 
 		socket.on('key_press', function (data) {
@@ -82,6 +92,7 @@ module.exports = function Routes (app, io) {
 		socket.on('disconnect', function (req) {
 			delete users[socket.id];
 			socket.broadcast.emit('remove_user', { id: socket.id });
+			count--;
 		})
 	});	
 

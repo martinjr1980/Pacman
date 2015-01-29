@@ -10,12 +10,13 @@
     <body>
         <div id='info'>
             <h1 class='yellow'>Pacman vs. Pacman</h1>
-            <h2 class='score'>Your Score: 0</h2>
+            <h2 class='score'></h2>
         </div>
         <div id='container'></div>
         <div id='coins'></div>
         <div id='hero'></div>
         <div id='enemy'></div>
+        <div id='start'><button class='start'>Waiting for More Players</button></div>
         <div id='end'></div>
     </body>
 </html>
@@ -27,12 +28,19 @@
     var player_array = [];
     var sound = {};
     var upPac;
+    var mainTime;
     var myID;
 
     var mainLoop = function() {
         players.loop(myID);
     }
 
+    var timeLoop = function() {
+        game.timer();
+    }
+
+    sound.start = new Audio('sounds/pacman_beginning.wav');
+    sound.background1 = new Audio('sounds/pacman_background.wav');
     sound.eat = new Audio('sounds/pacman_chomp.wav');
     sound.power = new Audio('sounds/pacman_eatghost.wav')
     sound.die = new Audio('sounds/pacman_death.wav');
@@ -47,18 +55,25 @@
         game.coins = data.coins;
         game.drawMap();
         game.drawCoins();
-        upPac = setInterval(mainLoop, 30);
     })
 
     socket.on('all_users', function (data) {
+        console.log(data);
         for (var id in data.users) {
-            var user = data.users[id].info;
-            players.createNew(user.name, user.x, user.y, user.pos, id);
+            var info = data.users[id].info;
+            players.createNew(data.users[id].name, info.x, info.y, info.pos, id);
         }
     })
 
     socket.on('new_user', function (data) {
-        players.createNew(data.user.info.name, data.user.info.x, data.user.info.y, data.user.info.pos, data.user.info.id);
+        console.log(data.user.name);
+        players.createNew(data.user.name, data.user.info.x, data.user.info.y, data.user.info.pos, data.user.info.id);
+    })
+
+    socket.on('start_game', function (data) {
+        document.getElementById('start').innerHTML = '';
+        sound.start.play();
+        mainTime = setInterval(timeLoop, 1000);
     })
 
     socket.on('remove_user', function (remove_user) {
@@ -84,7 +99,7 @@
     }
 
     function Game() {
-        this.info = { tile: 10, conv: 3 };
+        this.info = { tile: 10, conv: 3, timeElapsed: 0 };
         this.coins = [];
         this.map = [];
 
@@ -121,7 +136,16 @@
             $("img[id='300-840']").replaceWith("<img id='300-840' class='power'" +
                 "src='images/powerpellet.gif' style='top: 300px; left: 840px;'>");                     
         }
-    }
+
+        this.timer = function() {
+            this.info.timeElapsed++;
+            if (this.info.timeElapsed ===4) {
+                upPac = setInterval(mainLoop, 30);
+                // sound.background1.loop = true;
+                // sound.background1.play();
+            }
+        }
+     }
 
     function Pacman (name, x, y, pos, id) {
         var that = this;
@@ -140,11 +164,11 @@
 
         this.updateScore = function (player_id, player_score) {
             var score = '';
-            score = "Your Score: " + player_array[myID].info.score;
+            score = this.info.name + ": " + this.info.score;
             player_array[player_id].info.score = player_score;
             for (var id in player_array) {
-                if (player_array[id].info.id !== player_array[myID].info.id) {
-                    score += " | Opponent Score: " + player_array[id].info.score;
+                if (player_array[id].info.id !== this.info.id) {
+                    score += " | " + player_array[id].info.name + ": " + player_array[id].info.score;
                 }
             }
             document.getElementById('info').children[1].innerHTML = score;
