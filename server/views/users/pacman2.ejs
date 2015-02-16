@@ -57,7 +57,7 @@
         game.drawCoins();
     })
 
-    socket.on('all_users', function (data) {
+    socket.on('other_users', function (data) {
         console.log(data);
         for (var id in data.users) {
             var info = data.users[id].info;
@@ -70,14 +70,14 @@
         players.createNew(data.user.name, data.user.info.x, data.user.info.y, data.user.info.pos, data.user.info.id);
     })
 
+    socket.on('remove_user', function (remove_user) {
+        document.getElementById(remove_user.id).remove();
+    })
+
     socket.on('start_game', function (data) {
         document.getElementById('start').innerHTML = '';
         sound.start.play();
         mainTime = setInterval(timeLoop, 1000);
-    })
-
-    socket.on('remove_user', function (remove_user) {
-        document.getElementById(remove_user.id).remove();
     })
 
     document.onkeydown = function (e) {

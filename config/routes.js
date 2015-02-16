@@ -61,7 +61,7 @@ module.exports = function Routes (app, io) {
 			}
 			var user = { name: data.name, info: info };
 			socket.emit('current_user', { name: data.name, info: info, map: map, coins: coins });
-			socket.emit('all_users', { users: users });
+			socket.emit('other_users', { users: users });
 			socket.broadcast.emit('new_user', { user: user, users: users });
 			users[socket.id] = user;
 			if (count == 2) {
