@@ -1,8 +1,7 @@
 {
   "name": "1_pacman",
   "version": "0.0.0",
-  "private": true
-  },
+  "private": true,
   "dependencies": {
     "express": "~4.9.0",
     "body-parser": "~1.8.1",
