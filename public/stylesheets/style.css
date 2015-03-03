@@ -1,3 +1,5 @@
+@font-face { font-family: 'PixelSplitter'; src: url('PixelSplitter-Bold.ttf'); }
+
 * { margin: 0px; padding: 0px; font-family: PixelSplitter, verdana; }
 body { background-color: black; }
 
