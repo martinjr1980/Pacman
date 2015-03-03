@@ -30,8 +30,12 @@
 		// Pressing Enter Button
 		if (e.keyCode === 13) {
 			var el = document.getElementById('arrow1');
+			var el2 = document.getElementById('arrow2');
 			if (el.className === 'select') {
-				console.log('select');
+				window.location.href = '/classic';
+			}
+			else if (el2.className === 'select') {
+				window.location.href = '/survivor';
 			}
 		}
 	}
