@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang='en'>
     <head>
+        <meta name="viewport" content="width=1200, user-scalable=no">
         <meta charset='utf-8'>
         <title>Pacman vs. Pacman</title>
         <link rel='stylesheet' href='/stylesheets/style2.css' />
@@ -18,6 +19,13 @@
         <div id='enemy'></div>
         <div id='start'><button class='start'>Waiting for Player 2</button></div>
         <div id='end'></div>
+        <div id='controls'>
+            <div id='instructions'>CAN ALSO USE KEYPAD TO CONTROL PACMAN</div>
+            <div id='up'><p class='icon'>UP</p></div>
+            <div id='left'><p class='icon'>LEFT</p></div>
+            <div id='right'><p class='icon'>RIGHT</p></div>
+            <div id='down'><p class='icon'>DOWN</p></div>
+        </div>
     </body>
 </html>
 <script type="text/javascript">
@@ -86,6 +94,28 @@
             player_array[myID].detectCollision();
         }
     }
+
+    // Option to control Pacman by clicking button (to use on phone or tablet)
+    $('#left').click(function(){
+        player_array[myID].info.pos_temp = 37;
+        player_array[myID].detectCollision();
+        console.log('left');
+    })
+
+    $('#up').click(function(){
+        player_array[myID].info.pos_temp = 38;
+        player_array[myID].detectCollision();
+    })
+
+    $('#right').click(function(){
+        player_array[myID].info.pos_temp = 39;
+        player_array[myID].detectCollision();
+    })
+
+    $('#down').click(function(){
+        player_array[myID].info.pos_temp = 40;
+        player_array[myID].detectCollision();
+    })
 
     function Players() {
         this.loop = function(myID) {

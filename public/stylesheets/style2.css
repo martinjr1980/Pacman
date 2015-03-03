@@ -113,6 +113,15 @@ h2.score {
 	text-align: center;
 }
 
+#controls { position: absolute; height: 100px; width: 1200px; top: 660px; left: 0px; }
+
+#instructions { width: 100%; text-align: center; color: white;  }
+#up { position: relative; height: 60px; width: 170px; top: 0px; background-color: gray; border: 1px solid white; margin: 0px auto; border-radius: 5px; }
+#left { position: absolute; height: 60px; width: 170px; top: 60px; left: 325px; background-color: orange; border: 1px solid white; border-radius: 5px; }
+#right { position: absolute; height: 60px; width: 170px; top: 60px; right: 325px; background-color: orange; border: 1px solid white; border-radius: 5px; }
+#down { position: relative; height: 60px; width: 170px; top: 20px; background-color: gray; border: 1px solid white; margin: 0px auto; border-radius: 5px; }
+.icon { position: absolute; top: 20px; width: 100%; text-align: center; color: white; }
+
 .text {
 	color: red;
 }

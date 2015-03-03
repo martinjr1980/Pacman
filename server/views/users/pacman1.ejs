@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang='en'>
 	<head>
+		<meta name="viewport" content="width=570, user-scalable=no">
 		<meta charset='utf-8'>
 	 	<title>Pac Man Lite</title>
 	 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
@@ -19,9 +20,16 @@
  		<div id='enemy2'></div>
  		<div id='enemy3'></div>
  		<div id='enemy4'></div>
- 		<div id='start'><button class='start'>Press Enter to Begin</button></div>
+ 		<div id='start'><button class='start'>CLICK OR PRESS ENTER TO BEGIN</button></div>
  		<div id='ready'>READY!</div>
  		<div id='end'></div>
+ 		<div id='controls'>
+ 			<div id='instructions'>CAN ALSO USE KEYPAD TO CONTROL PACMAN</div>
+ 			<div id='up'><p class='icon'>UP</p></div>
+ 			<div id='left'><p class='icon'>LEFT</p></div>
+ 			<div id='right'><p class='icon'>RIGHT</p></div>
+ 			<div id='down'><p class='icon'>DOWN</p></div>
+ 		</div>
 	</body>
 </html>
 
@@ -64,17 +72,48 @@
 
 	document.onkeydown = function (e) {
 		var start = document.getElementById('start');
+		// Press Enter to start game
 		if (start.children[0] && e.keyCode === 13) {
 			start.innerHTML = '';
 			sound.start.play();
 			mainTime = setInterval(timeLoop, 1000);
 			$('#ready').html('4');
 		}
+		// Only checks for other keypress if the game has started
 		else if (!start.children[0] && e.keyCode >= 37 && e.keyCode <= 40) {
 			pacman.info.pos_temp = e.keyCode;
 			pacman.detectCollision();
 		}
 	}
+
+	// Can also start game by clicking button
+	$('#start').on('click', 'button', function(){
+		$(this).remove();
+		sound.start.play();
+		mainTime = setInterval(timeLoop, 1000);
+		$('#ready').html('4');
+	})
+
+	// Option to control Pacman by clicking button (to use on phone or tablet)
+	$('#left').click(function(){
+		pacman.info.pos_temp = 37;
+		pacman.detectCollision();
+	})
+
+	$('#up').click(function(){
+		pacman.info.pos_temp = 38;
+		pacman.detectCollision();
+	})
+
+	$('#right').click(function(){
+		pacman.info.pos_temp = 39;
+		pacman.detectCollision();
+	})
+
+	$('#down').click(function(){
+		pacman.info.pos_temp = 40;
+		pacman.detectCollision();
+	})
 
 	function Game() {
 		this.info = { tile: 10, conv: 3, timeElapsed: 0 };
